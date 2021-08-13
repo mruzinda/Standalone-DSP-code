@@ -134,9 +134,9 @@ void coherent_beamformer(cuComplex* input_data, cuComplex* coeff, float* output_
 	for(int a = 0; a < N_ANT; a++){ // Antenna index
 		// Complex multiplication of data and coefficients
 		bf_product.x = input_data[data_tr_idx(p, t, f, a)].x*coeff[coeff_idx(a, b, f)].x
-					- input_data[data_tr_idx(p, t, f, a)].y*coeff[coeff_idx(a, b, f)].y;
+						- input_data[data_tr_idx(p, t, f, a)].y*coeff[coeff_idx(a, b, f)].y;
 		bf_product.y = input_data[data_tr_idx(p, t, f, a)].x*coeff[coeff_idx(a, b, f)].y
-					+ input_data[data_tr_idx(p, t, f, a)].y*coeff[coeff_idx(a, b, f)].x;
+						+ input_data[data_tr_idx(p, t, f, a)].y*coeff[coeff_idx(a, b, f)].x;
 
 		// Beamform (Sum all antennas)
 		output_data[2*coh_bf_idx(t, f, b)] += bf_product.x;
@@ -217,7 +217,7 @@ void run_beamformer(signed char* data_in, float* coefficient, float* data_out){
 	cudaMemcpy(data_out, d_bf_pow, N_BF_POW*sizeof(float), cudaMemcpyDeviceToHost);
 	checkCUDAerr(kern_idx);
   
-    kern_idx = 0; // Reset the kernel index for the CUDA error check
+	kern_idx = 0; // Reset the kernel index for the CUDA error check
 	/*
 	// Option to copy output power or voltage to host
 	if(pow_flag == 0){
