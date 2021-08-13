@@ -23,7 +23,7 @@
 // b - beam index
 #define data_in_idx(p, t, f, a)  (p + N_POL*t + N_TIME*N_POL*f + N_BIN*N_TIME*N_POL*a)
 #define data_tr_idx(p, t, f, a)  (a + N_ANT*p + N_POL*N_ANT*f + N_BIN*N_POL*N_ANT*t)
-#define coeff_idx(a, b, f)          (a + N_ANT*b + N_BIN*N_ANT*f)
+#define coeff_idx(a, b, f)       (a + N_ANT*b + N_BIN*N_ANT*f)
 #define coh_bf_idx(t, f, b)      (t + N_TIME*f + N_BIN*N_TIME*b)
 
 void init_beamformer(); // Allocate memory to all arrays 
