@@ -126,6 +126,12 @@ void calculate_phase(int nbeams, int nants, uint32_t nchans_in, struct timespec 
   printf("LST in hours:min:sec = %d:%d:%d\n", (int)LST_hr, (int)LST_min, (int)LST_sec);
   printf("LST (float) in hours:min:sec = %f:%f:%f\n", LST_hr, LST_min, LST_sec);
   #endif
+  // LST in hours, minutes, and seconds
+  float LST_hr = LST/360*24; 
+  float LST_min = (LST_hr - (int)LST_hr)*60;
+  float LST_sec = (LST_min - (int)LST_min)*60;
+
+  printf("LST in hours:min:sec = %d:%d:%d\n", (int)LST_hr, (int)LST_min, (int)LST_sec);
 
   for (int b = 0; b < nbeams; b++) {
     double hour_angle = LST * 15. - beam_coord.ra[b];

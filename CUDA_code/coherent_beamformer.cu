@@ -3,12 +3,13 @@
 #include <cstdlib>
 #include <curand.h>
 #include <assert.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <cublas_v2.h>
 #include <time.h>
-#include <sys/time.h>
+//#include <sys/time.h>
 #include <iostream>
-#include <complex.h>
+#include <string.h>
+//#include <complex.h>
 #include <math.h>
 #include <cuComplex.h>
 #include <cuda.h>
@@ -21,14 +22,14 @@ using namespace std;
 void checkCUDAerr();
 
 // Generate simulated data
-signed char * simulate_data();
+float* simulate_data();
 
 // Generate simulated weights or coefficients
 float* simulate_coefficients();
 
 // Perform transpose on the data and convert to floats
 __global__
-void data_transpose(signed char* data_in, cuComplex* data_tra);
+void data_transpose(float* data_in, cuComplex* data_tra);
 
 // Convert weights from float to cuComplex
 __global__
@@ -72,8 +73,8 @@ inline void checkCUDAerr(int kernel_idx){
 	}
 }
 
-//signed char* h_data = NULL;
-signed char* d_data_char = NULL;
+//float* h_data = NULL;
+float* d_data_float = NULL;
 cuComplex* d_data_comp = NULL;
 float* d_coeff_float = NULL;
 cuComplex* d_coeff_comp = NULL;
@@ -81,9 +82,9 @@ float* d_coh_bf_out = NULL;
 float* d_coh_bf_pow = NULL;
 // Allocate memory to all arrays 
 void init_beamformer(){
-	//cudaMallocHost((void **)&h_data, N_INPUT*sizeof(signed char));
-	// Allocate memory for input data char type
-	cudaMalloc((void **)&d_data_char, N_INPUT*sizeof(signed char));
+	//cudaMallocHost((void **)&h_data, N_INPUT*sizeof(float));
+	// Allocate memory for input data float type
+	cudaMalloc((void **)&d_data_float, N_INPUT*sizeof(float));
 	// Allocate memory for input data cuComplex type
 	cudaMalloc((void **)&d_data_comp, N_INPUT*sizeof(cuComplex)/2);
 	// Allocate memory for coefficients float type
@@ -98,14 +99,15 @@ void init_beamformer(){
 
 // Perform transpose on the data and convert to floats
 __global__
-void data_transpose(signed char* data_in, cuComplex* data_tra){
+void data_transpose(float* data_in, cuComplex* data_tra){
 	int a = threadIdx.x; // Antenna index
 	int p = threadIdx.y; // Polarization index
 	int f = blockIdx.x;  // Frequency index
 	int t = blockIdx.y;  // Time sample index
-  
-	data_tra[data_tr_idx(p, t, f, a)].x = data_in[2*data_in_idx(p, t, f, a)]*1.0f;
-	data_tra[data_tr_idx(p, t, f, a)].y = data_in[2*data_in_idx(p, t, f, a) + 1]*1.0f;
+    
+	// If the input data is not float, just multiply it by '1.0f' to convert it to a float
+	data_tra[data_tr_idx(p, t, f, a)].x = data_in[2*data_in_idx(p, t, f, a)];
+	data_tra[data_tr_idx(p, t, f, a)].y = data_in[2*data_in_idx(p, t, f, a) + 1];
 }
 
 // Convert weights from float to cuComplex
@@ -157,7 +159,7 @@ void beamformer_power(float* bf_volt, float* bf_power){
 }
 
 // Run beamformer
-void run_beamformer(signed char* data_in, float* coefficient, float* data_out){
+void run_beamformer(float* data_in, float* h_coefficient, float* data_out){
 	int kern_idx = 0; // Kernel index in run_beamformer function for printing error
   
 	/*
@@ -182,7 +184,7 @@ void run_beamformer(signed char* data_in, float* coefficient, float* data_out){
 	dim3 dimBlock_bf_pow(N_BEAM, 1, 1);
 	dim3 dimGrid_bf_pow(N_BIN, N_TIME, 1);
 
-	signed char* d_data_in = d_data_char;
+	float* d_data_in = d_data_float;
 	cuComplex* d_data_tra = d_data_comp;
 	float* d_coeff_f = d_coeff_float;
 	cuComplex* d_coeff_c = d_coeff_comp;
@@ -190,11 +192,11 @@ void run_beamformer(signed char* data_in, float* coefficient, float* data_out){
 	float* d_bf_pow = d_coh_bf_pow;
   
 	// Copy input data from host to device
-	cudaMemcpy(d_data_in, data_in, N_INPUT*sizeof(signed char), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_data_in, data_in, N_INPUT*sizeof(float), cudaMemcpyHostToDevice);
 	checkCUDAerr(kern_idx);
   
 	// Copy beamformer coefficients from host to device
-	cudaMemcpy(d_coeff_f, coefficient, N_COEFF*sizeof(float), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_coeff_f, h_coefficient, N_COEFF*sizeof(float), cudaMemcpyHostToDevice);
 	checkCUDAerr(kern_idx);
 
 	// Perform transpose on the data and convert to floats  
@@ -234,10 +236,10 @@ void run_beamformer(signed char* data_in, float* coefficient, float* data_out){
 }
 
 // Generate simulated data
-signed char * simulate_data(){
-	signed char* data_sim;
-	data_sim = (signed char*)calloc(N_INPUT, sizeof(signed char));
-	for(int i = 0; i<(N_INPUT/2), i++){
+float* simulate_data(){
+	float* data_sim;
+	data_sim = (float*)calloc(N_INPUT, sizeof(float));
+	for(int i = 0; i<(N_INPUT/2); i++){
 		data_sim[2*i] = 1;
 	}
 	return data_sim;
@@ -246,24 +248,28 @@ signed char * simulate_data(){
 // Generate simulated weights or coefficients
 float* simulate_coefficients(){
 	float* coeff_sim;
+	
+	printf("Here in sim coeff!\n");
+	
 	coeff_sim = (float*)calloc(N_COEFF, sizeof(float));
-	for(int i = 0; i<(N_COEFF/2), i++){
+	
+	printf("Here in sim coeff 1!\n");
+	
+	for(int i = 0; i<(N_COEFF/2); i++){
 		coeff_sim[2*i] = 1;
+		//printf("Here in sim coeff: %f, idx = %d\n", coeff_sim[2*i], i);
 	}
+	
+	printf("Here in sim coeff 2!\n");
+	
 	return coeff_sim;
 }
 
-signed char* d_data_char = NULL;
-cuComplex* d_data_comp = NULL;
-float* d_coeff_float = NULL;
-cuComplex* d_coeff_comp = NULL;
-float* d_coh_bf_out = NULL;
-float* d_coh_bf_pow = NULL;
 // Free memory
 void cohbfCleanup() {
 	// Free up GPU memory at the end of a program
-	if (d_data_char != NULL) {
-		cudaFree(d_data_char);
+	if (d_data_float != NULL) {
+		cudaFree(d_data_float);
 	}
 	if (d_data_comp != NULL) {
 		cudaFree(d_data_comp);
@@ -285,38 +291,69 @@ void cohbfCleanup() {
 // Test all of the kernels and functions, and write the output to
 // a text file for analysis
 int main(){
-
+    printf("Here!\n");
 	// Generate simulated data
-	signed char* sim_data = simulate_data();
-  
+	float* sim_data = simulate_data();
+    
+	printf("Here1!\n");
+	
 	// Generate simulated weights or coefficients
 	float* sim_coefficients = simulate_coefficients();
-  
+    
+	printf("Here2!\n");
+	
 	// Allocate memory to all arrays used by run_beamformer() 
 	init_beamformer();
-  
+    
+	printf("Here3!\n");
+	
 	// Allocate memory for output array
 	float* output_data;
 	output_data = (float*)calloc(N_BF_POW,sizeof(float));
-  
+    
+	printf("Here4!\n");
+	
 	// Run beamformer 
 	run_beamformer(sim_data, sim_coefficients, output_data);
-  
+    
+	printf("Here5!\n");
+	
 	// Write data to text file for analysis
 	char output_filename[128];
-	output_filename = "'C:\Users\ruzie\OneDrive\Desktop\Work\CUDA_code\output_d.txt";
+	
+	printf("Here6!\n"); 
+	
+	//strcpy(output_filename, "C:\Users\ruzie\OneDrive\Desktop\Work\CUDA_code\output_d.txt");
+	strcpy(output_filename, "output_d.txt");
+	
+	printf("Here7!\n");
+	
 	FILE* output_file;
+	
+	printf("Here8!\n");
+	
 	output_file = fopen(output_filename, "w");
-	for(int i = 0; i<N_BF_POW; i++){
-		fprintf(output_file, "%g\n", output_data[i]);
+	
+	printf("Here9!\n");
+	
+	for(int ii = 0; ii<N_BF_POW; ii++){
+		fprintf(output_file, "%g\n", output_data[ii]);
 	}
+	
+	printf("Here10!\n");
+	
 	fclose(output_file);
+	
 	printf("Closed output file.\n");
+	
 	free(output_data);
+	
 	printf("Freed output array memory.\n");
 
 	// Free up device memory
 	cohbfCleanup();
-
+	
+	printf("Here11!\n");
+    
 	return 0;
 }

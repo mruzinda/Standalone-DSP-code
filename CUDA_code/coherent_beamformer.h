@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <complex.h>
+//#include <complex.h>
 #include <math.h>
 
 
 #define N_POL 2    // Number of polarizations
 #define N_TIME 8   // Number of time samples
-#define N_BIN 2^14 // Number of frequency bins after second FFT
+#define N_BIN 100  // Number of frequency bins after second FFT.  Should actually be 2^14, but due to limited memory on my laptop, arbitrarily 100
 #define N_ANT 64   // Number of antennas
 #define N_BEAM 64  // Number of beams
 
@@ -27,4 +27,4 @@
 #define coh_bf_idx(t, f, b)      (t + N_TIME*f + N_BIN*N_TIME*b)
 
 void init_beamformer(); // Allocate memory to all arrays 
-void run_beamformer(signed char* data_in, float* coefficient, float* data_out); // Run beamformer
+void run_beamformer(float* data_in, float* coefficient, float* data_out); // Run beamformer
