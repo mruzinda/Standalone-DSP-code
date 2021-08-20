@@ -1,20 +1,20 @@
 # Ignore .exe files
-.exe
+*.exe
 
 # Ignore .lib files
-.lib
+*.lib
 
 # Ignore .exp files
-.exp
+*.exp
 
 # Ignore .txt files
-.txt
+*.txt
 
 # Ignore .bin files
-.bin
+*.bin
 
 #Ignore .o files
-.o
+*.o
 
 # Ignore .so files
-.so
+*.so

@@ -190,8 +190,9 @@ void coherent_beamformer(cuComplex* input_data, cuComplex* coeff, float* output_
 		__syncthreads();
 	}
 	if (a == 0) {
-		output_data[2*coh_bf_idx(p, b, f, t)] += reduced_mul[0].x;
-		output_data[2*coh_bf_idx(p, b, f, t) + 1] += reduced_mul[0].y;
+		int h = coh_bf_idx(p, b, f, t);
+		output_data[2*h] += reduced_mul[0].x;
+		output_data[2*h + 1] += reduced_mul[0].y;
 	}
 
 	return;
@@ -201,13 +202,16 @@ void coherent_beamformer(cuComplex* input_data, cuComplex* coeff, float* output_
 __global__
 void beamformer_power(float* bf_volt, float* bf_power) {
 	int b = threadIdx.x; // Beam index
-	int p = threadIdx.y; // Polarization index
 	int f = blockIdx.x;  // Frequency bin index
 	int t = blockIdx.y;  // Time sample index
 
-	int h = coh_bf_idx(p, b, f, t);
 	// Power = Absolute value squared of output -> r^2 + i^2
-	bf_power[h] = (bf_volt[2*h]*bf_volt[2*h]) + (bf_volt[2*h + 1]*bf_volt[2*h + 1]);
+	int xp = coh_bf_idx(0, b, f, t); // X polarization
+	int yp = coh_bf_idx(1, b, f, t); // Y polarization
+	bf_power[pow_bf_idx(0, b, f, t)] = (bf_volt[2*xp]*bf_volt[2*xp]) + (bf_volt[2*xp + 1]*bf_volt[2*xp + 1]); // XX*
+	bf_power[pow_bf_idx(1, b, f, t)] = (bf_volt[2*yp]*bf_volt[2*yp]) + (bf_volt[2*yp + 1]*bf_volt[2*yp + 1]); // YY*
+	bf_power[pow_bf_idx(2, b, f, t)] = (bf_volt[2*xp]*bf_volt[2*yp]) + (bf_volt[2*xp + 1]*bf_volt[2*yp + 1]); // XY* real
+	bf_power[pow_bf_idx(3, b, f, t)] = (bf_volt[2*xp + 1]*bf_volt[2*yp]) - (bf_volt[2*xp]*bf_volt[2*yp + 1]); // XY* imag
 	
 	return;
 }
@@ -235,7 +239,7 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 	dim3 dimGrid_coh_bf(N_BIN, N_TIME, N_BEAM);
 
 	// Output power of beamformer kernel: Specify grid and block dimensions
-	dim3 dimBlock_bf_pow(N_BEAM, N_POL, 1);
+	dim3 dimBlock_bf_pow(N_BEAM, 1, 1);
 	dim3 dimGrid_bf_pow(N_BIN, N_TIME, 1);
 
 	float* d_data_in = d_data_float;
@@ -308,7 +312,7 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 float* simulate_data() {
 	float* data_sim;
 	data_sim = (float*)calloc(N_INPUT, sizeof(float));
-	for (int i = 0; i < (N_INPUT / 2); i++) {
+	for (int i = 0; i < (N_INPUT/2); i++) {
 		data_sim[2*i] = 1;
 	}
 	return data_sim;
@@ -324,7 +328,7 @@ float* simulate_coefficients() {
 
 	printf("Here in sim coeff 1!\n");
 
-	for (int i = 0; i < (N_COEFF / 2); i++) {
+	for (int i = 0; i < (N_COEFF/2); i++) {
 		coeff_sim[2*i] = 1;
 		//if(i> (3*N_COEFF/4)){
 		//printf("Here in sim coeff: %f, idx = %d\n", coeff_sim[2*i], i);
