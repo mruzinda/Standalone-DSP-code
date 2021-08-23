@@ -112,8 +112,8 @@ void data_transpose(float* data_in, cuComplex* data_tra) {
 	int t = blockIdx.y;  // Time sample index
 
 	// If the input data is not float e.g. signed char, just multiply it by '1.0f' to convert it to a float
-	data_tra[data_tr_idx(a, p, f, t)].x = data_in[2 * data_in_idx(a, p, f, t)];
-	data_tra[data_tr_idx(a, p, f, t)].y = data_in[2 * data_in_idx(a, p, f, t) + 1];
+	data_tra[data_tr_idx(a, p, f, t)].x = data_in[2*data_in_idx(a, p, f, t)];
+	data_tra[data_tr_idx(a, p, f, t)].y = data_in[2*data_in_idx(a, p, f, t) + 1];
 	
 	return;
 }
@@ -128,8 +128,8 @@ void beamformer_coefficient(float* coeff_float, cuComplex* coeff_complex) {
 	int b = blockIdx.y;  // Beam index
 	int f = blockIdx.x;  // Frequency bin index 
 
-	coeff_complex[coeff_idx(a, p, b, f)].x = coeff_float[2 * coeff_idx(a, p, b, f)];
-	coeff_complex[coeff_idx(a, p, b, f)].y = coeff_float[2 * coeff_idx(a, p, b, f) + 1];
+	coeff_complex[coeff_idx(a, p, b, f)].x = coeff_float[2*coeff_idx(a, p, b, f)];
+	coeff_complex[coeff_idx(a, p, b, f)].y = coeff_float[2*coeff_idx(a, p, b, f) + 1];
 	
 	return;
 }
