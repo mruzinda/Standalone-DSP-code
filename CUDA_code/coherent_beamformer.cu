@@ -162,39 +162,40 @@ void coherent_beamformer(cuComplex* input_data, cuComplex* coeff, float* output_
 	}
 	*/
 	int a = threadIdx.x; // Antenna index
-	int p = threadIdx.y; // Polarization index
+	//int p = threadIdx.y; // Polarization index
 	int f = blockIdx.x;  // Frequency index
 	int t = blockIdx.y;  // Time sample index
 	int b = blockIdx.z;  // Beam index
 
-	int i = data_tr_idx(a, p, f, t);
-	int w = coeff_idx(a, p, b, f);
-
 	__shared__ cuFloatComplex reduced_mul[N_ANT];
 
-	if (a < N_ANT) {
-		reduced_mul[a].x = input_data[i].x*coeff[w].x + input_data[i].y*coeff[w].y;
-		reduced_mul[a].y = input_data[i].y*coeff[w].x - input_data[i].x*coeff[w].y;
-	}
-	else {
-		reduced_mul[a].x = 0;
-		reduced_mul[a].y = 0;
-	}
-	__syncthreads();
+	for (int p = 0; p < N_POL; p++) {
+		int i = data_tr_idx(a, p, f, t);
+		int w = coeff_idx(a, p, b, f);
 
-	for (int k = blockDim.x/2; k > 0; k >>= 1) {
-		if (a < k) {
-			reduced_mul[a].x += reduced_mul[a + k].x;
-			reduced_mul[a].y += reduced_mul[a + k].y;
+		if (a < N_ANT) {
+			reduced_mul[a].x = input_data[i].x * coeff[w].x + input_data[i].y * coeff[w].y;
+			reduced_mul[a].y = input_data[i].y * coeff[w].x - input_data[i].x * coeff[w].y;
+		}
+		else {
+			reduced_mul[a].x = 0;
+			reduced_mul[a].y = 0;
 		}
 		__syncthreads();
-	}
-	if (a == 0) {
-		int h = coh_bf_idx(p, b, f, t);
-		output_data[2*h] += reduced_mul[0].x;
-		output_data[2*h + 1] += reduced_mul[0].y;
-	}
 
+		for (int k = blockDim.x / 2; k > 0; k >>= 1) {
+			if (a < k) {
+				reduced_mul[a].x += reduced_mul[a + k].x;
+				reduced_mul[a].y += reduced_mul[a + k].y;
+			}
+			__syncthreads();
+		}
+		if (a == 0) {
+			int h = coh_bf_idx(p, b, f, t);
+			output_data[2 * h] += reduced_mul[0].x;
+			output_data[2 * h + 1] += reduced_mul[0].y;
+		}
+	}
 	return;
 }
 
@@ -235,7 +236,8 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 	dim3 dimGrid_bf_coeff(N_BIN, N_BEAM, 1);
 
 	// Coherent beamformer kernel: Specify grid and block dimensions
-	dim3 dimBlock_coh_bf(N_ANT, N_POL, 1);
+	//dim3 dimBlock_coh_bf(N_ANT, N_POL, 1);
+	dim3 dimBlock_coh_bf(N_ANT, 1, 1);
 	dim3 dimGrid_coh_bf(N_BIN, N_TIME, N_BEAM);
 
 	// Output power of beamformer kernel: Specify grid and block dimensions
