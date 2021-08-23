@@ -162,14 +162,13 @@ void coherent_beamformer(cuComplex* input_data, cuComplex* coeff, float* output_
 	}
 	*/
 	int a = threadIdx.x; // Antenna index
-	//int p = threadIdx.y; // Polarization index
 	int f = blockIdx.x;  // Frequency index
 	int t = blockIdx.y;  // Time sample index
 	int b = blockIdx.z;  // Beam index
 
 	__shared__ cuFloatComplex reduced_mul[N_ANT];
 
-	for (int p = 0; p < N_POL; p++) {
+	for (int p = 0; p < N_POL; p++) { // Polarization index
 		int i = data_tr_idx(a, p, f, t);
 		int w = coeff_idx(a, p, b, f);
 
@@ -314,8 +313,46 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 float* simulate_data() {
 	float* data_sim;
 	data_sim = (float*)calloc(N_INPUT, sizeof(float));
-	for (int i = 0; i < (N_INPUT/2); i++) {
-		data_sim[2*i] = 1;
+	// 'sim_flag' is a flag that indicates the kind of data that is simulated.
+	// sim_flag = 0 -> Ones
+	// sim_flag = 1 -> Repeating sequence of 1 to 64
+	// sim_flag = 2 -> Sequence of 1 to 64 placed in a particular bin (bin 6 for now)
+	// sim flag = 3 -> 
+	int sim_flag = 2;
+	if (sim_flag == 0) {
+		for (int i = 0; i < (N_INPUT / 2); i++) {
+			data_sim[2 * i] = 1;
+		}
+	}
+	if (sim_flag == 1) {
+		int tmp = 0;
+		for (int p = 0; p < N_POL; p++) {
+			for (int t = 0; t < N_TIME; t++) {
+				for (int f = 0; f < N_BIN; f++) {
+					for (int a = 0; a < N_ANT; a++) {
+						if (tmp >= N_ANT+1) {
+							tmp = 0;
+						}
+						tmp = (tmp + 1) % N_ANT;
+						data_sim[2*data_in_idx(a, p, f, t)] = tmp;
+					}
+				}
+			}
+		}
+	}
+	if (sim_flag == 2) {
+		int tmp = 0;
+		for (int p = 0; p < N_POL; p++) {
+			for (int t = 0; t < N_TIME; t++) {
+				for (int a = 0; a < N_ANT; a++) {
+					if (tmp >= N_ANT + 1) {
+						tmp = 0;
+					}
+					tmp = (tmp + 1) % N_ANT;
+					data_sim[2 * data_in_idx(a, p, 0, t)] = tmp;
+				}
+			}
+		}
 	}
 	return data_sim;
 }
