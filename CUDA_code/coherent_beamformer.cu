@@ -208,11 +208,19 @@ void beamformer_power(float* bf_volt, float* bf_power) {
 	// Power = Absolute value squared of output -> r^2 + i^2
 	int xp = coh_bf_idx(0, b, f, t); // X polarization
 	int yp = coh_bf_idx(1, b, f, t); // Y polarization
+	
+	float x_pol_pow = (bf_volt[2 * xp] * bf_volt[2 * xp]) + (bf_volt[2 * xp + 1] * bf_volt[2 * xp + 1]); // XX*
+	float y_pol_pow = (bf_volt[2 * yp] * bf_volt[2 * yp]) + (bf_volt[2 * yp + 1] * bf_volt[2 * yp + 1]); // YY*
+
+	bf_power[pow_bf_idx(b, f, t)] = x_pol_pow + y_pol_pow; // XX* + YY*
+
+	/*
 	bf_power[pow_bf_idx(0, b, f, t)] = (bf_volt[2*xp]*bf_volt[2*xp]) + (bf_volt[2*xp + 1]*bf_volt[2*xp + 1]); // XX*
 	bf_power[pow_bf_idx(1, b, f, t)] = (bf_volt[2*yp]*bf_volt[2*yp]) + (bf_volt[2*yp + 1]*bf_volt[2*yp + 1]); // YY*
 	bf_power[pow_bf_idx(2, b, f, t)] = (bf_volt[2*xp]*bf_volt[2*yp]) + (bf_volt[2*xp + 1]*bf_volt[2*yp + 1]); // XY* real
 	bf_power[pow_bf_idx(3, b, f, t)] = (bf_volt[2*xp + 1]*bf_volt[2*yp]) - (bf_volt[2*xp]*bf_volt[2*yp + 1]); // XY* imag
-	
+	*/
+
 	return;
 }
 
@@ -320,7 +328,7 @@ float* simulate_data() {
 	sim_flag = 2 -> Sequence of 1 to 64 placed in a particular bin (bin 6 for now)
 	sim flag = 3 -> Simulated radio source (pulsar?)
 	*/
-	int sim_flag = 2;
+	int sim_flag = 0;
 	if (sim_flag == 0) {
 		for (int i = 0; i < (N_INPUT / 2); i++) {
 			data_sim[2 * i] = 1;
