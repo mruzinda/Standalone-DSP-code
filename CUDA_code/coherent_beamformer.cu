@@ -313,11 +313,13 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 float* simulate_data() {
 	float* data_sim;
 	data_sim = (float*)calloc(N_INPUT, sizeof(float));
-	// 'sim_flag' is a flag that indicates the kind of data that is simulated.
-	// sim_flag = 0 -> Ones
-	// sim_flag = 1 -> Repeating sequence of 1 to 64
-	// sim_flag = 2 -> Sequence of 1 to 64 placed in a particular bin (bin 6 for now)
-	// sim flag = 3 -> 
+	/*
+	'sim_flag' is a flag that indicates the kind of data that is simulated.
+	sim_flag = 0 -> Ones
+	sim_flag = 1 -> Repeating sequence of 1 to 64
+	sim_flag = 2 -> Sequence of 1 to 64 placed in a particular bin (bin 6 for now)
+	sim flag = 3 -> Simulated radio source (pulsar?)
+	*/
 	int sim_flag = 2;
 	if (sim_flag == 0) {
 		for (int i = 0; i < (N_INPUT / 2); i++) {
@@ -354,6 +356,49 @@ float* simulate_data() {
 			}
 		}
 	}
+	
+	/*
+	int sim_flag = 2;
+	switch (sim_flag) {
+	case 0:
+	for (int i = 0; i < (N_INPUT / 2); i++) {
+		data_sim[2 * i] = 1;
+	}
+	break;
+	case 1:
+	int tmp = 0;
+	for (int p = 0; p < N_POL; p++) {
+		for (int t = 0; t < N_TIME; t++) {
+			for (int f = 0; f < N_BIN; f++) {
+				for (int a = 0; a < N_ANT; a++) {
+					if (tmp >= N_ANT + 1) {
+						tmp = 0;
+					}
+					tmp = (tmp + 1) % N_ANT;
+					data_sim[2 * data_in_idx(a, p, f, t)] = tmp;
+				}
+			}
+		}
+	}
+	break;
+	case 2:
+	int tmp = 0;
+	for (int p = 0; p < N_POL; p++) {
+		for (int t = 0; t < N_TIME; t++) {
+			for (int a = 0; a < N_ANT; a++) {
+				if (tmp >= N_ANT + 1) {
+					tmp = 0;
+				}
+				tmp = (tmp + 1) % N_ANT;
+				data_sim[2 * data_in_idx(a, p, 0, t)] = tmp;
+			}
+		}
+	}
+	break;
+	default:
+	printf("Value of flag is not valid!\n");
+	}
+	*/
 	return data_sim;
 }
 
@@ -369,9 +414,6 @@ float* simulate_coefficients() {
 
 	for (int i = 0; i < (N_COEFF/2); i++) {
 		coeff_sim[2*i] = 1;
-		//if(i> (3*N_COEFF/4)){
-		//printf("Here in sim coeff: %f, idx = %d\n", coeff_sim[2*i], i);
-		//}
 	}
 
 	printf("Here in sim coeff 2!\n");
