@@ -328,7 +328,7 @@ float* simulate_data() {
 	sim_flag = 2 -> Sequence of 1 to 64 placed in a particular bin (bin 6 for now)
 	sim flag = 3 -> Simulated radio source (pulsar?)
 	*/
-	int sim_flag = 0;
+	int sim_flag = 2;
 	if (sim_flag == 0) {
 		for (int i = 0; i < (N_INPUT / 2); i++) {
 			data_sim[2 * i] = 1;
@@ -455,6 +455,9 @@ void cohbfCleanup() {
 // Test all of the kernels and functions, and write the output to
 // a text file for analysis
 int main() {
+	// Commands used for gnuplot
+	//char* commandsForGnuplot[] = { "set title \"Beamformer output\"", "plot 'intensitymap.txt' matrix with image" };
+
 	printf("Here!\n");
 	// Generate simulated data
 	float* sim_data = simulate_data();
@@ -481,6 +484,36 @@ int main() {
 	run_beamformer(sim_data, sim_coefficients, output_data);
 
 	printf("Here5!\n");
+
+    /*
+	// Plot intensity map of a single beam of the output power using gnuplot
+	FILE* fp = NULL;
+	fp = fopen("intensitymap.txt", "w");
+
+	float t0, t1, t2, t3, t4, t5, t6, t7; // Time samples 
+	int b = 0; // Beam index
+	for (int f = 0; f < N_BIN; f++) {
+		t0 = output_data[pow_bf_idx(b, f, 0)];
+		t1 = output_data[pow_bf_idx(b, f, 1)];
+		t2 = output_data[pow_bf_idx(b, f, 2)];
+		t3 = output_data[pow_bf_idx(b, f, 3)];
+		t4 = output_data[pow_bf_idx(b, f, 4)];
+		t5 = output_data[pow_bf_idx(b, f, 5)];
+		t6 = output_data[pow_bf_idx(b, f, 6)];
+		t7 = output_data[pow_bf_idx(b, f, 7)];
+		fprintf(fp, "%f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\n", t0, t1, t2, t3, t4, t5, t6, t7);
+	}
+
+	FILE* gnuplotPipe = popen("gnuplot -persistent", "w");
+
+	//fprintf(gnuplotPipe, "plot 'heatmap.txt' matrix with image \n");
+
+	for (int i = 0; i < N_COMMANDS; i++) {
+		fprintf(gnuplotPipe, "%s \n", commandsForGnuplot[i]);
+	}
+
+	fflush(gnuplotPipe);
+    */
 
 	// Write data to text file for analysis
 	char output_filename[128];

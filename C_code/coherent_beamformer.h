@@ -16,6 +16,8 @@
 #define N_OUTPUT 2*N_POL*N_BEAM*N_BIN*N_TIME      // Size of beamformer output
 #define N_BF_POW N_BEAM*N_BIN*N_TIME    // Size of beamformer output after abs()^2
 
+#define N_COMMANDS 2 // Number of commands run by gnuplot
+
 // p - polarization index
 // t - time index
 // f - frequency index
