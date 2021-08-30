@@ -338,7 +338,7 @@ int main() {
 	printf("Here6!\n");
 
 	//strcpy(output_filename, "C:\Users\ruzie\OneDrive\Desktop\Work\CUDA_code\output_d.txt");
-	strcpy(output_filename, "output_d.txt");
+	strcpy(output_filename, "output_d_c.txt");
 
 	printf("Here7!\n");
 

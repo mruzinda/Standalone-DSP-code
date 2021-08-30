@@ -31,7 +31,13 @@ time_idx = 0 # time sample index to plot
 
 # Plot intensity map of frequency vs. time
 plt.imshow(contents_array[beam_idx][0:N_bin-1][0:N_time-1], extent=[1, N_bin, 1, N_time])
+plt.title('Intensity map (Frequency vs. time)')
+plt.xlabel('Time samples')
+plt.ylabel('Frequency bins')
 plt.show()
 
 # Plot of power spectrum
 plt.plot(contents_array[beam_idx][0:N_bin-1][time_idx])
+plt.title('Power spectrum at a time sample')
+plt.xlabel('Frequency bins')
+plt.ylabel('Power (arb.)')
