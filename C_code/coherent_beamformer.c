@@ -156,7 +156,7 @@ float* simulate_data() {
 	'sim_flag' is a flag that indicates the kind of data that is simulated.
 	sim_flag = 0 -> Ones
 	sim_flag = 1 -> Repeating sequence of 1 to 64
-	sim_flag = 2 -> Sequence of 1 to 64 placed in a particular bin (bin 6 for now)
+	sim_flag = 2 -> Sequence of 1 to 64 placed in a particular bin (bin 3 and 6 for now)
 	sim flag = 3 -> Simulated radio source (pulsar?)
 	*/
 	int sim_flag = 2;
@@ -171,11 +171,11 @@ float* simulate_data() {
 			for (int t = 0; t < N_TIME; t++) {
 				for (int f = 0; f < N_BIN; f++) {
 					for (int a = 0; a < N_ANT; a++) {
-						if (tmp >= N_ANT+1) {
+						if (tmp >= N_ANT) {
 							tmp = 0;
 						}
-						tmp = (tmp + 1) % N_ANT;
-						data_sim[2*data_in_idx(a, p, f, t)] = tmp;
+						tmp = (tmp + 1) % (N_ANT+1);
+						data_sim[2 * data_in_idx(a, p, f, t)] = tmp;
 					}
 				}
 			}
@@ -186,11 +186,12 @@ float* simulate_data() {
 		for (int p = 0; p < N_POL; p++) {
 			for (int t = 0; t < N_TIME; t++) {
 				for (int a = 0; a < N_ANT; a++) {
-					if (tmp >= N_ANT + 1) {
+					if (tmp >= N_ANT) {
 						tmp = 0;
 					}
-					tmp = (tmp + 1) % N_ANT;
+					tmp = (tmp + 1) % (N_ANT+1);
 					data_sim[2 * data_in_idx(a, p, 5, t)] = tmp;
+					data_sim[2 * data_in_idx(a, p, 2, t)] = tmp;
 				}
 			}
 		}
@@ -245,17 +246,56 @@ float* simulate_data() {
 float* simulate_coefficients() {
 	float* coeff_sim;
 
-	printf("Here in sim coeff!\n");
-
 	coeff_sim = (float*)calloc(N_COEFF, sizeof(float));
-
-	printf("Here in sim coeff 1!\n");
-
-	for (int i = 0; i < (N_COEFF/2); i++) {
-		coeff_sim[2*i] = 1;
+	
+	/*
+	'sim_flag' is a flag that indicates the kind of data that is simulated.
+	sim_flag = 0 -> Ones
+	sim_flag = 1 -> Scale each beam by incrementing value i.e. beam 1 = 1, beam 2 = 2, ..., beam 64 = 64
+	sim_flag = 2 -> Scale each beam by incrementing value in a particular bin (bin 3 and 6 for now). Match simulated data sim_flag = 2
+	sim flag = 3 -> Simulated radio source (pulsar?)
+	*/
+	int sim_flag = 2;
+	if (sim_flag == 0) {
+		for (int i = 0; i < (N_COEFF/2); i++) {
+			coeff_sim[2*i] = 1;
+		}
 	}
-
-	printf("Here in sim coeff 2!\n");
+	if (sim_flag == 1) {
+		int tmp = 0;
+		for (int p = 0; p < N_POL; p++) {
+			for (int a = 0; a < N_ANT; a++) {
+				for (int f = 0; f < N_BIN; f++) {
+					for (int b = 0; b < N_BEAM; b++) {
+						if (tmp >= N_BEAM) {
+							tmp = 0;
+						}
+						tmp = (tmp + 1) % (N_BEAM+1);
+						coeff_sim[2 * coeff_idx(a, p, b, f)] = tmp;
+					}
+				}
+			}
+		}
+	}
+	if (sim_flag == 2) {
+		int tmp = 0;
+		for (int p = 0; p < N_POL; p++) {
+			for (int a = 0; a < N_ANT; a++) {
+				for (int b = 0; b < N_BEAM; b++) {
+					if (tmp >= N_BEAM) {
+						tmp = 0;
+					}
+					tmp = (tmp + 1) % (N_BEAM+1);
+					coeff_sim[2 * coeff_idx(a, p, b, 2)] = tmp;
+					coeff_sim[2 * coeff_idx(a, p, b, 5)] = tmp;
+				}
+			}
+		}
+	}
+	
+	for (int b = 0; b < N_BEAM; b++){
+		printf("Beam %d = %f\n", (b+1), coeff_sim[2 * coeff_idx(20, 0, b, 2)]);
+	}
 
 	return coeff_sim;
 }
@@ -274,9 +314,6 @@ void cohbfCleanup() {
 // Test all of the kernels and functions, and write the output to
 // a text file for analysis
 int main() {
-	// Commands used for gnuplot
-	char * commandsForGnuplot[] = {"set title \"Beamformer output\"", "plot 'intensitymap.txt' matrix with image"};
-	
 	printf("Here!\n");
 	// Generate simulated data
 	float* sim_data = simulate_data();
@@ -304,34 +341,41 @@ int main() {
 
 	printf("Here5!\n");
 
-    // Plot intensity map of a single beam of the output power using gnuplot
-	FILE *fp=NULL;
-	fp=fopen("intensitymap.txt","w");
+	int plt_flag = 0; // To plot figure here with gnuplot, set flag to 1
 	
-	float t0,t1,t2,t3,t4,t5,t6,t7; // Time samples 
-	int b = 0; // Beam index
-	for(int f=0; f<N_BIN; f++){
-		t0 = output_data[pow_bf_idx(b, f, 0)];
-		t1 = output_data[pow_bf_idx(b, f, 1)];
-		t2 = output_data[pow_bf_idx(b, f, 2)];
-		t3 = output_data[pow_bf_idx(b, f, 3)];
-		t4 = output_data[pow_bf_idx(b, f, 4)];
-		t5 = output_data[pow_bf_idx(b, f, 5)];
-		t6 = output_data[pow_bf_idx(b, f, 6)];
-		t7 = output_data[pow_bf_idx(b, f, 7)];
-		fprintf(fp,"%f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\n", t0,t1,t2,t3,t4,t5,t6,t7);
-	}
+	if(plt_flag == 1){
+		// Commands used for gnuplot
+		char * commandsForGnuplot[] = {"set title \"Beamformer output\"", "plot 'intensitymap.txt' matrix with image"};
 	
-	FILE * gnuplotPipe = popen ("gnuplot -persistent", "w");
+		// Plot intensity map of a single beam of the output power using gnuplot
+		FILE *fp=NULL;
+		fp=fopen("intensitymap.txt","w");
+	
+		float t0,t1,t2,t3,t4,t5,t6,t7; // Time samples 
+		int b = 0; // Beam index
+		for(int f=0; f<N_BIN; f++){
+			t0 = output_data[pow_bf_idx(b, f, 0)];
+			t1 = output_data[pow_bf_idx(b, f, 1)];
+			t2 = output_data[pow_bf_idx(b, f, 2)];
+			t3 = output_data[pow_bf_idx(b, f, 3)];
+			t4 = output_data[pow_bf_idx(b, f, 4)];
+			t5 = output_data[pow_bf_idx(b, f, 5)];
+			t6 = output_data[pow_bf_idx(b, f, 6)];
+			t7 = output_data[pow_bf_idx(b, f, 7)];
+			fprintf(fp,"%f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\n", t0,t1,t2,t3,t4,t5,t6,t7);
+		}
+	
+		FILE * gnuplotPipe = popen ("gnuplot -persistent", "w");
   
-      //fprintf(gnuplotPipe, "plot 'heatmap.txt' matrix with image \n");
+		//fprintf(gnuplotPipe, "plot 'heatmap.txt' matrix with image \n");
 	  
-	for(int i=0; i<N_COMMANDS; i++){
-		fprintf(gnuplotPipe, "%s \n", commandsForGnuplot[i]);
+		for(int i=0; i<N_COMMANDS; i++){
+			fprintf(gnuplotPipe, "%s \n", commandsForGnuplot[i]);
+		}
+	
+		fflush(gnuplotPipe);
 	}
 	
-	fflush(gnuplotPipe);
-
 	// Write data to text file for analysis
 	char output_filename[128];
 
