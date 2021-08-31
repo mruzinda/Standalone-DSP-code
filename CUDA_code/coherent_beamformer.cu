@@ -236,20 +236,20 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 
 	// Transpose kernel: Specify grid and block dimensions
 	dim3 dimBlock_transpose(N_ANT, N_POL, 1);
-	dim3 dimGrid_transpose(N_BIN, N_TIME, 1);
+	dim3 dimGrid_transpose(N_FREQ, N_TIME, 1);
 
 	// Beamformer coefficient kernel (float to complex): Specify grid and block dimensions
 	dim3 dimBlock_bf_coeff(N_ANT, N_POL, 1);
-	dim3 dimGrid_bf_coeff(N_BIN, N_BEAM, 1);
+	dim3 dimGrid_bf_coeff(N_FREQ, N_BEAM, 1);
 
 	// Coherent beamformer kernel: Specify grid and block dimensions
 	//dim3 dimBlock_coh_bf(N_ANT, N_POL, 1);
 	dim3 dimBlock_coh_bf(N_ANT, 1, 1);
-	dim3 dimGrid_coh_bf(N_BIN, N_TIME, N_BEAM);
+	dim3 dimGrid_coh_bf(N_FREQ, N_TIME, N_BEAM);
 
 	// Output power of beamformer kernel: Specify grid and block dimensions
 	dim3 dimBlock_bf_pow(N_BEAM, 1, 1);
-	dim3 dimGrid_bf_pow(N_BIN, N_TIME, 1);
+	dim3 dimGrid_bf_pow(N_FREQ, N_TIME, 1);
 
 	float* d_data_in = d_data_float;
 	cuComplex* d_data_tra = d_data_comp;
@@ -326,9 +326,9 @@ float* simulate_data() {
 	sim_flag = 0 -> Ones
 	sim_flag = 1 -> Repeating sequence of 1 to 64
 	sim_flag = 2 -> Sequence of 1 to 64 placed in a particular bin (bin 6 for now)
-	sim flag = 3 -> Simulated radio source (pulsar?)
+	sim flag = 3 -> Simulated radio source in center beam assuming ULA
 	*/
-	int sim_flag = 2;
+	int sim_flag = 3;
 	if (sim_flag == 0) {
 		for (int i = 0; i < (N_INPUT / 2); i++) {
 			data_sim[2 * i] = 1;
@@ -338,13 +338,13 @@ float* simulate_data() {
 		int tmp = 0;
 		for (int p = 0; p < N_POL; p++) {
 			for (int t = 0; t < N_TIME; t++) {
-				for (int f = 0; f < N_BIN; f++) {
+				for (int f = 0; f < N_FREQ; f++) {
 					for (int a = 0; a < N_ANT; a++) {
-						if (tmp >= N_ANT+1) {
+						if (tmp >= N_ANT) {
 							tmp = 0;
 						}
-						tmp = (tmp + 1) % N_ANT;
-						data_sim[2*data_in_idx(a, p, f, t)] = tmp;
+						tmp = (tmp + 1) % (N_ANT+1);
+						data_sim[2 * data_in_idx(a, p, f, t)] = tmp;
 					}
 				}
 			}
@@ -355,16 +355,46 @@ float* simulate_data() {
 		for (int p = 0; p < N_POL; p++) {
 			for (int t = 0; t < N_TIME; t++) {
 				for (int a = 0; a < N_ANT; a++) {
-					if (tmp >= N_ANT + 1) {
+					if (tmp >= N_ANT) {
 						tmp = 0;
 					}
-					tmp = (tmp + 1) % N_ANT;
-					data_sim[2 * data_in_idx(a, p, 0, t)] = tmp;
+					tmp = (tmp + 1) % (N_ANT+1);
+					data_sim[2 * data_in_idx(a, p, 5, t)] = tmp;
+					data_sim[2 * data_in_idx(a, p, 2, t)] = tmp;
 				}
 			}
 		}
 	}
-	
+	if (sim_flag == 3) {
+		float c = 3e8; // Speed of light
+		float c_freq = 1.25e9; // Center frequency
+		float lambda = c / c_freq; // Wavelength
+		float d = lambda / 2; // Distance between antennas
+		float chan_band = 1; // Fine channel bandwidth in Hz
+
+		float* rf_freqs = (float*)calloc(N_FREQ, sizeof(float));
+		for (int i = 0; i < N_FREQ; i++) {
+			rf_freqs[i] = chan_band * i + c_freq;
+		}
+
+		float* theta = (float*)calloc(N_TIME, sizeof(float)); // SOI direction/angle of arrival
+		float* tau = (float*)calloc(N_TIME, sizeof(float)); // Delay
+
+		for (int t = 0; t < N_TIME; t++) {
+			theta[t] = (t - (N_TIME / 2)) + 90;// SOI direction/angle of arrival
+			tau[t] = d * cos(theta[t]) / c; // Delay
+			for (int f = 0; f < N_FREQ; f++) {
+				for (int a = 0; a < N_ANT; a++) {
+					// X polarization
+					data_sim[2 * data_in_idx(a, 0, f, t)] = cos(2 * PI * rf_freqs[f] * a * tau[t]);
+					data_sim[2 * data_in_idx(a, 0, f, t) + 1] = sin(2 * PI * rf_freqs[f] * a * tau[t]);
+					// Y polarization
+					data_sim[2 * data_in_idx(a, 1, f, t)] = cos(2 * PI * rf_freqs[f] * a * tau[t]);
+					data_sim[2 * data_in_idx(a, 1, f, t) + 1] = sin(2 * PI * rf_freqs[f] * a * tau[t]); // Make this negative if a different polarization is tested
+				}
+			}
+		}
+	}
 	/*
 	int sim_flag = 2;
 	switch (sim_flag) {
@@ -377,7 +407,7 @@ float* simulate_data() {
 	int tmp = 0;
 	for (int p = 0; p < N_POL; p++) {
 		for (int t = 0; t < N_TIME; t++) {
-			for (int f = 0; f < N_BIN; f++) {
+			for (int f = 0; f < N_FREQ; f++) {
 				for (int a = 0; a < N_ANT; a++) {
 					if (tmp >= N_ANT + 1) {
 						tmp = 0;
@@ -414,17 +444,85 @@ float* simulate_data() {
 float* simulate_coefficients() {
 	float* coeff_sim;
 
-	printf("Here in sim coeff!\n");
-
 	coeff_sim = (float*)calloc(N_COEFF, sizeof(float));
 
-	printf("Here in sim coeff 1!\n");
-
-	for (int i = 0; i < (N_COEFF/2); i++) {
-		coeff_sim[2*i] = 1;
+	/*
+	'sim_flag' is a flag that indicates the kind of data that is simulated.
+	sim_flag = 0 -> Ones
+	sim_flag = 1 -> Scale each beam by incrementing value i.e. beam 1 = 1, beam 2 = 2, ..., beam 64 = 64
+	sim_flag = 2 -> Scale each beam by incrementing value in a particular bin (bin 3 and 6 for now). Match simulated data sim_flag = 2
+	sim flag = 3 -> Simulated beams from 58 to 122 degrees. Assuming a ULA.
+	*/
+	int sim_flag = 3;
+	if (sim_flag == 0) {
+		for (int i = 0; i < (N_COEFF / 2); i++) {
+			coeff_sim[2 * i] = 1;
+		}
 	}
+	if (sim_flag == 1) {
+		int tmp = 0;
+		for (int p = 0; p < N_POL; p++) {
+			for (int a = 0; a < N_ANT; a++) {
+				for (int f = 0; f < N_FREQ; f++) {
+					for (int b = 0; b < N_BEAM; b++) {
+						if (tmp >= N_BEAM) {
+							tmp = 0;
+						}
+						tmp = (tmp + 1) % (N_BEAM + 1);
+						coeff_sim[2 * coeff_idx(a, p, b, f)] = tmp;
+					}
+				}
+			}
+		}
+	}
+	if (sim_flag == 2) {
+		int tmp = 0;
+		for (int p = 0; p < N_POL; p++) {
+			for (int a = 0; a < N_ANT; a++) {
+				for (int b = 0; b < N_BEAM; b++) {
+					if (tmp >= N_BEAM) {
+						tmp = 0;
+					}
+					tmp = (tmp + 1) % (N_BEAM + 1);
+					coeff_sim[2 * coeff_idx(a, p, b, 2)] = tmp;
+					coeff_sim[2 * coeff_idx(a, p, b, 5)] = tmp;
+				}
+			}
+		}
+	}
+	if (sim_flag == 3) {
+		float c = 3e8; // Speed of light
+		float c_freq = 1.25e9; // Center frequency
+		float lambda = c / c_freq; // Wavelength
+		float d = lambda / 2; // Distance between antennas
+		float chan_band = 1; // Fine channel bandwidth in Hz
 
-	printf("Here in sim coeff 2!\n");
+		float* rf_freqs = (float*)calloc(N_FREQ, sizeof(float));
+		for (int i = 0; i < N_FREQ; i++) {
+			rf_freqs[i] = chan_band * i + c_freq;
+		}
+
+		float* theta = (float*)calloc(N_TIME, sizeof(float)); // Beam angle from 58 to 122 degrees
+		float* tau_beam = (float*)calloc(N_BEAM, sizeof(float)); // Delay
+
+		for (int b = 0; b < N_BEAM; b++) {
+			theta[b] = (b - (N_BEAM / 2)) + 90; // Beam angle from 58 to 122 degrees - Given SOI at 90 deg, the beam with the most power is beamm 33
+			tau_beam[b] = d * cos(theta[b]) / c; // Delay
+			for (int f = 0; f < N_FREQ; f++) {
+				for (int a = 0; a < N_ANT; a++) {
+					// X polarization
+					coeff_sim[2 * coeff_idx(a, 0, b, f)] = cos(2 * PI * rf_freqs[f] * a * tau_beam[b]);
+					coeff_sim[2 * coeff_idx(a, 0, b, f) + 1] = sin(2 * PI * rf_freqs[f] * a * tau_beam[b]);
+					// Y polarization
+					coeff_sim[2 * coeff_idx(a, 1, b, f)] = cos(2 * PI * rf_freqs[f] * a * tau_beam[b]);
+					coeff_sim[2 * coeff_idx(a, 1, b, f) + 1] = sin(2 * PI * rf_freqs[f] * a * tau_beam[b]); // Make this negative if a different polarization is tested
+				}
+			}
+		}
+	}
+	//for (int b = 0; b < N_BEAM; b++){
+	//	printf("Beam %d = %f\n", (b+1), coeff_sim[2 * coeff_idx(0, 0, b, 2)]);
+	//}
 
 	return coeff_sim;
 }
@@ -452,11 +550,10 @@ void cohbfCleanup() {
 	}
 }
 
+
 // Test all of the kernels and functions, and write the output to
 // a text file for analysis
 int main() {
-	// Commands used for gnuplot
-	//char* commandsForGnuplot[] = { "set title \"Beamformer output\"", "plot 'intensitymap.txt' matrix with image" };
 
 	printf("Here!\n");
 	// Generate simulated data
@@ -484,44 +581,14 @@ int main() {
 	run_beamformer(sim_data, sim_coefficients, output_data);
 
 	printf("Here5!\n");
-
-    /*
-	// Plot intensity map of a single beam of the output power using gnuplot
-	FILE* fp = NULL;
-	fp = fopen("intensitymap.txt", "w");
-
-	float t0, t1, t2, t3, t4, t5, t6, t7; // Time samples 
-	int b = 0; // Beam index
-	for (int f = 0; f < N_BIN; f++) {
-		t0 = output_data[pow_bf_idx(b, f, 0)];
-		t1 = output_data[pow_bf_idx(b, f, 1)];
-		t2 = output_data[pow_bf_idx(b, f, 2)];
-		t3 = output_data[pow_bf_idx(b, f, 3)];
-		t4 = output_data[pow_bf_idx(b, f, 4)];
-		t5 = output_data[pow_bf_idx(b, f, 5)];
-		t6 = output_data[pow_bf_idx(b, f, 6)];
-		t7 = output_data[pow_bf_idx(b, f, 7)];
-		fprintf(fp, "%f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\n", t0, t1, t2, t3, t4, t5, t6, t7);
-	}
-
-	FILE* gnuplotPipe = popen("gnuplot -persistent", "w");
-
-	//fprintf(gnuplotPipe, "plot 'heatmap.txt' matrix with image \n");
-
-	for (int i = 0; i < N_COMMANDS; i++) {
-		fprintf(gnuplotPipe, "%s \n", commandsForGnuplot[i]);
-	}
-
-	fflush(gnuplotPipe);
-    */
-
+	
 	// Write data to text file for analysis
 	char output_filename[128];
 
 	printf("Here6!\n");
 
 	//strcpy(output_filename, "C:\Users\ruzie\OneDrive\Desktop\Work\CUDA_code\output_d.txt");
-	strcpy(output_filename, "output_d.txt");
+	strcpy(output_filename, "output_d_cuda.txt");
 
 	printf("Here7!\n");
 

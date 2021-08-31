@@ -4,8 +4,10 @@ from array import array
 import numpy as np
 
 # Open text file containing beamformer output
-f = open("output_d_c.txt", 'r')
-#f = open("output_d_cuda.txt", 'r')
+#f = open("output_d_c.txt", 'r')
+# = open("output_d_cuda.txt", 'r')
+f = open("output_d_c_simple.txt", 'r')
+#f = open("output_d_cuda_simple.txt", 'r')
 
 # Read file contents
 contents = f.read()
@@ -44,6 +46,7 @@ plt.plot(contents_array[time_idx,0:N_bin,beam_idx])
 plt.title('Power spectrum at a time sample')
 plt.xlabel('Frequency bins')
 plt.ylabel('Power (arb.)')
+plt.show()
 
 #fig, axs = plt.subplots(1, 2)
 #fig.suptitle('Power spectra of individual beams')
@@ -67,7 +70,7 @@ axs[1, 1].set_title('Beam 4')
 plt.subplots_adjust(left=0.1,
                     bottom=0.1, 
                     right=0.9, 
-                    top=0.9, 
+                    top=0.85,
                     wspace=0.4, 
                     hspace=0.6)
 
@@ -77,6 +80,42 @@ for ax in axs.flat:
 # Hide x labels and tick labels for top plots and y ticks for right plots.
 #for ax in axs.flat:
 #    ax.label_outer()
+plt.show()
+
+# Plot of power over time
+freq_idx = 5 # Frequency to plot
+plt.plot(contents_array[0:N_time,freq_idx,beam_idx])
+plt.title('Power over time at a particular frequency')
+plt.xlabel('Time samples')
+plt.ylabel('Power (arb.)')
+plt.show()
+
+fig, axs = plt.subplots(2, 2)
+fig.suptitle('Power over time of individual beams')
+axs[0, 0].plot(contents_array[0:N_time,freq_idx,0])
+axs[0, 0].set_title('Beam 1')
+axs[0, 1].plot(contents_array[0:N_time,freq_idx,1], 'tab:orange')
+axs[0, 1].set_title('Beam 2')
+axs[1, 0].plot(contents_array[0:N_time,freq_idx,2], 'tab:green')
+axs[1, 0].set_title('Beam 3')
+axs[1, 1].plot(contents_array[0:N_time,freq_idx,33], 'tab:red')
+axs[1, 1].set_title('Beam 33')
+
+# set the spacing between subplots
+plt.subplots_adjust(left=0.1,
+                    bottom=0.1, 
+                    right=0.9, 
+                    top=0.85, 
+                    wspace=0.4, 
+                    hspace=0.6)
+
+for ax in axs.flat:
+    ax.set(xlabel='Time samples', ylabel='Power')
+
+# Hide x labels and tick labels for top plots and y ticks for right plots.
+#for ax in axs.flat:
+#    ax.label_outer()
+plt.show()
 
 f.close()
 
