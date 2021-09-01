@@ -212,7 +212,7 @@ float* simulate_data() {
 		float * tau = (float *)calloc(N_TIME, sizeof(float)); // Delay
 		
 		for (int t = 0; t < N_TIME; t++) {
-			theta[t] = (t - (N_TIME/2)) + 90;// SOI direction/angle of arrival
+			theta[t] = (t - (N_TIME/2)) + 90; // SOI direction/angle of arrival -> Moving across array over time i.e. angle changes each time sample
 			tau[t] = d*cos(theta[t])/c; // Delay
 			for (int f = 0; f < N_FREQ; f++) {
 				for (int a = 0; a < N_ANT; a++) {
@@ -295,7 +295,7 @@ float* simulate_coefficients() {
 		float * tau_beam = (float *)calloc(N_BEAM, sizeof(float)); // Delay
 		
 		for (int b = 0; b < N_BEAM; b++) {
-			theta[b] = (b - (N_BEAM/2)) + 90; // Beam angle from 58 to 122 degrees - Given SOI at 90 deg, the beam with the most power is beamm 33
+			theta[b] = (b - (N_BEAM/2)) + 90; // Beam angle from 58 to 122 degrees - Given SOI at 90 deg or moving across array, the beam with the most power is beamm 33
 			tau_beam[b] = d*cos(theta[b])/c; // Delay
 			for (int f = 0; f < N_FREQ; f++) {
 				for (int a = 0; a < N_ANT; a++) {

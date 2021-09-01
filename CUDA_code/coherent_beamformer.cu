@@ -381,7 +381,7 @@ float* simulate_data() {
 		float* tau = (float*)calloc(N_TIME, sizeof(float)); // Delay
 
 		for (int t = 0; t < N_TIME; t++) {
-			theta[t] = (t - (N_TIME / 2)) + 90;// SOI direction/angle of arrival
+			theta[t] = (t - (N_TIME / 2)) + 90; // SOI direction/angle of arrival -> Moving across array over time i.e. angle changes each time sample
 			tau[t] = d * cos(theta[t]) / c; // Delay
 			for (int f = 0; f < N_FREQ; f++) {
 				for (int a = 0; a < N_ANT; a++) {
@@ -395,48 +395,7 @@ float* simulate_data() {
 			}
 		}
 	}
-	/*
-	int sim_flag = 2;
-	switch (sim_flag) {
-	case 0:
-	for (int i = 0; i < (N_INPUT / 2); i++) {
-		data_sim[2 * i] = 1;
-	}
-	break;
-	case 1:
-	int tmp = 0;
-	for (int p = 0; p < N_POL; p++) {
-		for (int t = 0; t < N_TIME; t++) {
-			for (int f = 0; f < N_FREQ; f++) {
-				for (int a = 0; a < N_ANT; a++) {
-					if (tmp >= N_ANT + 1) {
-						tmp = 0;
-					}
-					tmp = (tmp + 1) % N_ANT;
-					data_sim[2 * data_in_idx(a, p, f, t)] = tmp;
-				}
-			}
-		}
-	}
-	break;
-	case 2:
-	int tmp = 0;
-	for (int p = 0; p < N_POL; p++) {
-		for (int t = 0; t < N_TIME; t++) {
-			for (int a = 0; a < N_ANT; a++) {
-				if (tmp >= N_ANT + 1) {
-					tmp = 0;
-				}
-				tmp = (tmp + 1) % N_ANT;
-				data_sim[2 * data_in_idx(a, p, 0, t)] = tmp;
-			}
-		}
-	}
-	break;
-	default:
-	printf("Value of flag is not valid!\n");
-	}
-	*/
+	
 	return data_sim;
 }
 
@@ -506,7 +465,7 @@ float* simulate_coefficients() {
 		float* tau_beam = (float*)calloc(N_BEAM, sizeof(float)); // Delay
 
 		for (int b = 0; b < N_BEAM; b++) {
-			theta[b] = (b - (N_BEAM / 2)) + 90; // Beam angle from 58 to 122 degrees - Given SOI at 90 deg, the beam with the most power is beamm 33
+			theta[b] = (b - (N_BEAM / 2)) + 90; // Beam angle from 58 to 122 degrees - Given SOI at 90 deg or moving across array, the beam with the most power is beamm 33
 			tau_beam[b] = d * cos(theta[b]) / c; // Delay
 			for (int f = 0; f < N_FREQ; f++) {
 				for (int a = 0; a < N_ANT; a++) {
