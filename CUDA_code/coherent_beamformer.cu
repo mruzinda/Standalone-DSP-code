@@ -21,7 +21,7 @@ using namespace std;
 
 // Check for CUDA error
 //inline void checkCUDAerr(int kernel_idx);
-void checkCUDAerr(int kernel_idx);
+void checkCUDAerr(int kernel_idx, int err_flag);
 
 // Generate simulated data
 float* simulate_data();
@@ -47,32 +47,56 @@ void beamformer_power(float* bf_volt, float* bf_power);
 
 // Check for CUDA error
 //inline void checkCUDAerr(int kernel_idx){
-void checkCUDAerr(int kernel_idx) {
+void checkCUDAerr(int func_idx, int err_flag) {
 	//kernel_idx = kernel_idx + 1;
 	cudaError_t err_code;
 	err_code = cudaGetLastError();
 	if (err_code != cudaSuccess) {
-		if (kernel_idx == 0) {
-			printf("COH_BF: Input data cudaMemcpy() Failed: %s\n", cudaGetErrorString(err_code));
-		}
-		if (kernel_idx == 1) {
-			printf("COH_BF: Coefficient cudaMemcpy() Failed: %s\n", cudaGetErrorString(err_code));
-		}
-		if (kernel_idx == 2) {
-			printf("COH_BF: data_transpose() Failed: %s\n", cudaGetErrorString(err_code));
-		}
-		if (kernel_idx == 3) {
-			printf("COH_BF: beamformer_coefficient() Failed: %s\n", cudaGetErrorString(err_code));
-		}
-		if (kernel_idx == 4) {
-			printf("COH_BF: coherent_beamformer() Failed: %s\n", cudaGetErrorString(err_code));
-		}
-		if (kernel_idx == 5) {
-			printf("COH_BF: beamformer_power() Failed: %s\n", cudaGetErrorString(err_code));
-		}
-		if (kernel_idx == 6) {
-			printf("COH_BF: Final cudaMemcpy Failed: %s\n", cudaGetErrorString(err_code));
-		}
+                printf("In err func \n");
+                if (err_flag == 0) {
+                	if (func_idx == 0) {
+				printf("COH_BF: Input data float cudaMalloc() Failed: %s\n", cudaGetErrorString(err_code));
+			}
+			if (func_idx == 1) {
+				printf("COH_BF: Input data complex cudaMalloc() Failed: %s\n", cudaGetErrorString(err_code));
+			}
+			if (func_idx == 2) {
+				printf("COH_BF: coeff float cudaMalloc() Failed: %s\n", cudaGetErrorString(err_code));
+			}
+			if (func_idx == 3) {
+				printf("COH_BF: coeff complex cudaMalloc() Failed: %s\n", cudaGetErrorString(err_code));
+			}
+			if (func_idx == 4) {
+				printf("COH_BF: output volt cudaMalloc() Failed: %s\n", cudaGetErrorString(err_code));
+			}
+			if (func_idx == 5) {
+				printf("COH_BF: output pow cudaMalloc() Failed: %s\n", cudaGetErrorString(err_code));
+			}
+
+                }
+                if (err_flag == 1) {
+			if (func_idx == 0) {
+				printf("COH_BF: Input data cudaMemcpy() Failed: %s\n", cudaGetErrorString(err_code));
+			}
+			if (func_idx == 1) {
+				printf("COH_BF: Coefficient cudaMemcpy() Failed: %s\n", cudaGetErrorString(err_code));
+			}
+			if (func_idx == 2) {
+				printf("COH_BF: data_transpose() Failed: %s\n", cudaGetErrorString(err_code));
+			}
+			if (func_idx == 3) {
+				printf("COH_BF: beamformer_coefficient() Failed: %s\n", cudaGetErrorString(err_code));
+			}
+			if (func_idx == 4) {
+				printf("COH_BF: coherent_beamformer() Failed: %s\n", cudaGetErrorString(err_code));
+			}
+			if (func_idx == 5) {
+				printf("COH_BF: beamformer_power() Failed: %s\n", cudaGetErrorString(err_code));
+			}
+			if (func_idx == 6) {
+				printf("COH_BF: Final cudaMemcpy Failed: %s\n", cudaGetErrorString(err_code));
+			}
+                }
 	}
 	return;
 }
@@ -86,19 +110,47 @@ float* d_coh_bf_out = NULL;
 float* d_coh_bf_pow = NULL;
 // Allocate memory to all arrays 
 void init_beamformer() {
+        int malloc_idx = 0;
+        int err_flag = 0;
 	//cudaMallocHost((void **)&h_data, N_INPUT*sizeof(float));
+	printf("Here In init_beamformer(): %d!\n", malloc_idx);
 	// Allocate memory for input data float type
-	cudaMalloc((void**)&d_data_float, N_INPUT * sizeof(float));
+	cudaMalloc((void **)&d_data_float, N_INPUT * sizeof(float));
+        checkCUDAerr(malloc_idx, err_flag);
+	malloc_idx = malloc_idx + 1;
+	printf("Here malloc idx: %d!\n", malloc_idx);
+
 	// Allocate memory for input data cuComplex type
-	cudaMalloc((void**)&d_data_comp, N_INPUT * sizeof(cuComplex) / 2);
+	cudaMalloc((void **)&d_data_comp, N_INPUT * sizeof(cuComplex) / 2);
+        checkCUDAerr(malloc_idx, err_flag);
+	malloc_idx = malloc_idx + 1;
+	printf("Here malloc idx: %d!\n", malloc_idx);
+
 	// Allocate memory for coefficients float type
-	cudaMalloc((void**)&d_coeff_float, N_COEFF * sizeof(float));
+	cudaMalloc((void **)&d_coeff_float, N_COEFF * sizeof(float));
+        checkCUDAerr(malloc_idx, err_flag);
+	malloc_idx = malloc_idx + 1;
+	printf("Here malloc idx: %d!\n", malloc_idx);
+
 	// Allocate memory for coefficients cuComplex type
-	cudaMalloc((void**)&d_coeff_comp, N_COEFF * sizeof(cuComplex) / 2);
+	cudaMalloc((void **)&d_coeff_comp, N_COEFF * sizeof(cuComplex) / 2);
+        checkCUDAerr(malloc_idx, err_flag);
+	malloc_idx = malloc_idx + 1;
+	printf("Here malloc idx: %d!\n", malloc_idx);
+
 	// Allocate memory for coherent beamformer output
-	cudaMalloc((void**)&d_coh_bf_out, N_OUTPUT * sizeof(float));
+	cudaMalloc((void **)&d_coh_bf_out, N_OUTPUT * sizeof(float));
+        checkCUDAerr(malloc_idx, err_flag);
+	malloc_idx = malloc_idx + 1;
+	printf("Here malloc idx: %d!\n", malloc_idx);
+
 	// Allocate memory for output power of coherent beamformer
-	cudaMalloc((void**)&d_coh_bf_pow, N_BF_POW * sizeof(float));
+	cudaMalloc((void **)&d_coh_bf_pow, N_BF_POW * sizeof(float));
+        checkCUDAerr(malloc_idx, err_flag);
+	malloc_idx = malloc_idx + 1;
+	printf("Here malloc idx: %d!\n", malloc_idx);
+
+        malloc_idx = 0;
 
 	return;
 }
@@ -227,7 +279,7 @@ void beamformer_power(float* bf_volt, float* bf_power) {
 // Run beamformer
 void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 	int kern_idx = 0; // Kernel index in run_beamformer function for printing error
-
+        int err_flag = 1; // Indicates whether to print kernel or malloc related errors
 	/*
 	// Allocate input data in pinned memory
 	// (This may take longer than it's worth to implement pinned memory)
@@ -260,43 +312,43 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 
 	// Copy input data from host to device
 	cudaMemcpy(d_data_in, data_in, N_INPUT * sizeof(float), cudaMemcpyHostToDevice);
-	checkCUDAerr(kern_idx);
+	checkCUDAerr(kern_idx, err_flag);
 	kern_idx = kern_idx + 1;
 	printf("Here kernel idx: %d!\n", kern_idx);
 
 	// Copy beamformer coefficients from host to device
 	cudaMemcpy(d_coeff_f, h_coefficient, N_COEFF * sizeof(float), cudaMemcpyHostToDevice);
-	checkCUDAerr(kern_idx);
+	checkCUDAerr(kern_idx, err_flag);
 	kern_idx = kern_idx + 1;
 	printf("Here kernel idx: %d!\n", kern_idx);
 
 	// Perform transpose on the data and convert to floats  
 	data_transpose<<<dimGrid_transpose, dimBlock_transpose >>>(d_data_in, d_data_tra);
-	checkCUDAerr(kern_idx);
+	checkCUDAerr(kern_idx, err_flag);
 	kern_idx = kern_idx + 1;
 	printf("Here kernel idx: %d!\n", kern_idx);
 
 	// Convert weights from float to cuComplex    
 	beamformer_coefficient<<<dimGrid_bf_coeff, dimBlock_bf_coeff >>>(d_coeff_f, d_coeff_c);
-	checkCUDAerr(kern_idx);
+	checkCUDAerr(kern_idx, err_flag);
 	kern_idx = kern_idx + 1;
 	printf("Here kernel idx: %d!\n", kern_idx);
 
 	// Perform beamforming operation
 	coherent_beamformer<<<dimGrid_coh_bf, dimBlock_coh_bf>>>(d_data_tra, d_coeff_c, d_bf_output);
-	checkCUDAerr(kern_idx);
+	checkCUDAerr(kern_idx, err_flag);
 	kern_idx = kern_idx + 1;
 	printf("Here kernel idx: %d!\n", kern_idx);
 
 	// Compute power of beamformer output (abs()^2)    
 	beamformer_power<<<dimGrid_bf_pow, dimBlock_bf_pow>>>(d_bf_output, d_bf_pow);
-	checkCUDAerr(kern_idx);
+	checkCUDAerr(kern_idx, err_flag);
 	kern_idx = kern_idx + 1;
 	printf("Here kernel idx: %d!\n", kern_idx);
 
 	// Copy output power from device to host
 	cudaMemcpy(data_out, d_bf_pow, N_BF_POW*sizeof(float), cudaMemcpyDeviceToHost);
-	checkCUDAerr(kern_idx);
+	checkCUDAerr(kern_idx, err_flag);
 	printf("Here kernel idx: %d!\n", kern_idx);
 
 	kern_idx = 0; // Reset the kernel index for the CUDA error check
