@@ -136,7 +136,6 @@ void beamformer_coefficient(float* coeff_float, cuComplex* coeff_complex) {
 	int p = threadIdx.y; // Polarization index
 	int b = blockIdx.y;  // Beam index
 	int f = blockIdx.x;  // Frequency bin index 
-
 	coeff_complex[coeff_idx(a, p, b, f)].x = coeff_float[2*coeff_idx(a, p, b, f)];
 	coeff_complex[coeff_idx(a, p, b, f)].y = coeff_float[2*coeff_idx(a, p, b, f) + 1];
 	
@@ -152,11 +151,9 @@ void coherent_beamformer(cuComplex* input_data, float* coeff, float* output_data
 	int f = blockIdx.x;  // Frequency index
 	int t = blockIdx.y;  // Time sample index
 	int b = blockIdx.z;  // Beam index
-
 	cuComplex bf_product;
 	cuComplex bf_in_data;
 	cuComplex bf_coeff;
-
 	for (int a = 0; a < N_ANT; a++) { // Antenna index
 		bf_in_data.x = input_data[data_tr_idx(a, p, f, t)].x;
 		bf_in_data.y = input_data[data_tr_idx(a, p, f, t)].y;
@@ -165,7 +162,6 @@ void coherent_beamformer(cuComplex* input_data, float* coeff, float* output_data
 		// Complex multiplication of data and coefficients
 		bf_product.x = (bf_in_data.x * bf_coeff.x) - (bf_in_data.y * bf_coeff.y);
 		bf_product.y = (bf_in_data.x * bf_coeff.y) + (bf_in_data.y * bf_coeff.x);
-
 		// Beamform (Sum all antennas)
 		output_data[2*coh_bf_idx(p, b, f, t)] += bf_product.x;
 		output_data[2*coh_bf_idx(p, b, f, t) + 1] += bf_product.y;
@@ -176,7 +172,7 @@ void coherent_beamformer(cuComplex* input_data, float* coeff, float* output_data
 	int t = blockIdx.y;  // Time sample index
 	int b = blockIdx.z;  // Beam index
 
-		__shared__ cuFloatComplex reduced_mul[N_ANT];
+	__shared__ cuFloatComplex reduced_mul[N_ANT];
 
 	for (int p = 0; p < N_POL; p++) { // Polarization index
 		// Reinitialize output_data since we are using the input data array to be more efficient
@@ -249,6 +245,8 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 	*h_data = *data_in;
 	*/
 
+	cudaError_t err_code;
+
 	// Transpose kernel: Specify grid and block dimensions
 	dim3 dimBlock_transpose(N_ANT, N_POL, 1);
 	dim3 dimGrid_transpose(N_FREQ, N_TIME, 1);
@@ -273,6 +271,8 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 	//float* d_bf_output = d_coh_bf_out;
 	float* d_bf_pow = d_coh_bf_pow;
         
+	//printf("data_in[0] = %f \n", data_in[0]);
+	//printf("h_coefficient[0] = %f \n", h_coefficient[0]);
 	// Copy input data from host to device
 	checkCuda(cudaMemcpy(d_data_in, data_in, N_INPUT * sizeof(float), cudaMemcpyHostToDevice));
 	printf("First cudaMemcpy(HtoD) in run_beamformer() \n");
@@ -283,27 +283,47 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 
 	// Perform transpose on the data and convert to floats  
 	data_transpose<<<dimGrid_transpose, dimBlock_transpose >>>(d_data_in, d_data_tra);
+	err_code = cudaGetLastError();
+	if (err_code != cudaSuccess) {
+		printf("BF: data_transpose() kernel Failed: %s\n", cudaGetErrorString(err_code));
+	}
 	printf("Here data_transpose! \n");
 
 	// Convert weights from float to cuComplex    
 	//beamformer_coefficient<<<dimGrid_bf_coeff, dimBlock_bf_coeff >>>(d_coeff_f, d_coeff_c);
 	//printf("Here beamformer_coefficient! \n");
 
+	// Test for d_data_in
+	//cudaFree(d_data_in);
+	//float* d_bf_output = NULL;
+	//checkCuda(cudaMalloc((void **)&d_bf_output, N_OUTPUT * sizeof(float)));
+
 	// Perform beamforming operation
 	// Use d_data_in for output since it is no longer being utilized,
 	// and it is the same size as the output (4 GiB).
 	coherent_beamformer<<<dimGrid_coh_bf, dimBlock_coh_bf>>>(d_data_tra, d_coefficient, d_data_in);
 	//coherent_beamformer<<<dimGrid_coh_bf, dimBlock_coh_bf>>>(d_data_tra, d_coefficient, d_bf_output);
+	err_code = cudaGetLastError();
+	if (err_code != cudaSuccess) {
+		printf("BF: coherent_beamformer() kernel Failed: %s\n", cudaGetErrorString(err_code));
+	}
 	printf("Here coherent_beamformer! \n");	
 
 	// Compute power of beamformer output (abs()^2)    
 	beamformer_power<<<dimGrid_bf_pow, dimBlock_bf_pow>>>(d_data_in, d_bf_pow);
 	//beamformer_power<<<dimGrid_bf_pow, dimBlock_bf_pow>>>(d_bf_output, d_bf_pow);
+	err_code = cudaGetLastError();
+	if (err_code != cudaSuccess) {
+		printf("BF: beamformer_power() kernel Failed: %s\n", cudaGetErrorString(err_code));
+	}
 	printf("Here beamformer_power! \n");
 
 	// Copy output power from device to host
+	//checkCuda(cudaMemcpy(data_out, d_bf_output, N_OUTPUT*sizeof(float), cudaMemcpyDeviceToHost));
+	//checkCuda(cudaMemcpy(data_out, d_data_tra, N_INPUT*sizeof(float), cudaMemcpyDeviceToHost));
 	checkCuda(cudaMemcpy(data_out, d_bf_pow, N_BF_POW*sizeof(float), cudaMemcpyDeviceToHost));
 	printf("Here cudaMemcpy(DtoH)! \n");
+
 	/*
 	// Option to copy output power or voltage to host
 	if(pow_flag == 0){
@@ -312,7 +332,6 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 	}else{
 		beamformer_power<<<dimGrid_bf_pow, dimBlock_bf_pow>>>(d_bf_output, d_bf_pow);
 		checkCUDAerr(kern_idx);
-
 		cudaMemcpy(data_out, d_bf_pow, N_BF_POW*sizeof(float), cudaMemcpyDeviceToHost);
 		checkCUDAerr(kern_idx);
 	}
@@ -325,6 +344,8 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 float* simulate_data() {
 	float* data_sim;
 	data_sim = (float*)calloc(N_INPUT, sizeof(float));
+	//checkCuda(cudaMallocHost((void **)&data_sim, N_INPUT * sizeof(float)));
+
 	/*
 	'sim_flag' is a flag that indicates the kind of data that is simulated.
 	sim_flag = 0 -> Ones
@@ -399,15 +420,17 @@ float* simulate_data() {
 			}
 		}
 	}
-	
+	//for (int a = 0; a < N_ANT; a++){
+	//	printf("Antenna %d = %f\n", (a+1), data_sim[2 * data_in_idx(a, 0, 0, 0)]);
+	//}
 	return data_sim;
 }
 
 // Generate simulated weights or coefficients
 float* simulate_coefficients() {
 	float* coeff_sim;
-
 	coeff_sim = (float*)calloc(N_COEFF, sizeof(float));
+	//checkCuda(cudaMallocHost((void **)&coeff_sim, N_COEFF * sizeof(float)));
 
 	/*
 	'sim_flag' is a flag that indicates the kind of data that is simulated.
@@ -479,6 +502,25 @@ float* simulate_coefficients() {
 	return coeff_sim;
 }
 
+// The input_data_pin() function uses cudaHostRegister() to allocate the input host
+// array in pinned memory.
+// This speeds up the cudaMemcpy() and enables implementation into HASHPIPE/RTOS.
+void input_data_pin(float * data_pin) {
+	checkCuda(cudaHostRegister(data_pin, N_INPUT*sizeof(float), cudaHostRegisterPortable));
+}
+
+// The coefficient_pin() function uses cudaHostRegister() to allocate the input host
+// array in pinned memory.
+// This speeds up the cudaMemcpy() and enables implementation into HASHPIPE/RTOS.
+void coefficient_pin(float * coeff_pin) {
+	checkCuda(cudaHostRegister(coeff_pin, N_COEFF*sizeof(float), cudaHostRegisterPortable));
+}
+
+// Unregister host arrays from pinned memory
+void unregister_data(void * data_unregister){
+	checkCudaErrors(cudaHostUnregister(data_unregister));
+}
+
 // Free memory
 void cohbfCleanup() {
 	// Free up GPU memory at the end of a program
@@ -518,19 +560,22 @@ int main() {
 	printf("Here1!\n");
 	// Generate simulated data
 	float* sim_data = simulate_data();
-        //*h_data = *sim_data;
+	// Register the array in pinned memory to speed HtoD mem copy
+	input_data_pin(sim_data);
 
 	printf("Here2!\n");
 
 	// Generate simulated weights or coefficients
 	float* sim_coefficients = simulate_coefficients();
-	//*h_coeff = *sim_coefficients;
+	// Register the array in pinned memory to speed HtoD mem copy
+	coefficient_pin(sim_coefficients);
 
 	printf("Here3!\n");
 
 	// Allocate memory for output array
 	float* output_data;
-	output_data = (float*)calloc(N_BF_POW, sizeof(float));
+	//output_data = (float*)calloc(N_BF_POW, sizeof(float));
+	output_data = (float*)calloc(N_OUTPUT, sizeof(float));
 
 	printf("Here4!\n");
 
@@ -538,7 +583,7 @@ int main() {
 	run_beamformer(sim_data, sim_coefficients, output_data);
 	//run_beamformer(h_data, h_coeff, output_data);
 
-	printf("Here5!\n");
+	printf("Here5, Beamformer output: %f \n", output_data[0]);
 	
 	// Write data to text file for analysis
 	char output_filename[128];
@@ -569,8 +614,10 @@ int main() {
 	printf("Closed output file.\n");
 
 	free(output_data);
+	unregister_data(sim_data);
+	unregister_data(sim_coefficients);
 
-	printf("Freed output array memory.\n");
+	printf("Freed output array and unregistered arrays in pinned memory.\n");
 
 	// Free up device memory
 	//cudaFreeHost(h_data);
