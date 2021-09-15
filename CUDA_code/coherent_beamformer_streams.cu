@@ -113,15 +113,16 @@ void init_beamformer() {
 
 // Perform transpose on the data and convert to floats
 __global__
-void data_transpose(float* data_in, cuComplex* data_tra) {
+void data_transpose(float* data_in, cuComplex* data_tra, unsigned int offset) {
 	int a = threadIdx.x; // Antenna index
 	int p = threadIdx.y; // Polarization index
 	int f = blockIdx.x;  // Frequency index
 	int t = blockIdx.y;  // Time sample index
 
 	// If the input data is not float e.g. signed char, just multiply it by '1.0f' to convert it to a float
-	data_tra[data_tr_idx(a, p, f, t)].x = data_in[2*data_in_idx(a, p, f, t)];
-	data_tra[data_tr_idx(a, p, f, t)].y = data_in[2*data_in_idx(a, p, f, t) + 1];
+	unsigned int h = offset + data_tr_idx(a, p, f, t);
+	data_tra[h].x = data_in[2*h];
+	data_tra[h].y = data_in[2*h + 1];
 	
 	return;
 }
@@ -145,7 +146,7 @@ void beamformer_coefficient(float* coeff_float, cuComplex* coeff_complex) {
 
 // Perform beamforming operation
 __global__
-void coherent_beamformer(cuComplex* input_data, float* coeff, float* output_data) {
+void coherent_beamformer(cuComplex* input_data, float* coeff, float* output_data, unsigned int offset) {
 	/*
 	int p = threadIdx.x; // Polarization index
 	int f = blockIdx.x;  // Frequency index
@@ -176,13 +177,13 @@ void coherent_beamformer(cuComplex* input_data, float* coeff, float* output_data
 
 	for (int p = 0; p < N_POL; p++) { // Polarization index
 		// Reinitialize output_data since we are using the input data array to be more efficient
-		int h = coh_bf_idx(p, b, f, t);
+		unsigned int h = offset + coh_bf_idx(p, b, f, t);
 		output_data[2 * h] = 0;
 		output_data[2 * h + 1] = 0;
 
 
-		int i = data_tr_idx(a, p, f, t);
-		int w = coeff_idx(a, b);
+		unsigned int i = offset + data_tr_idx(a, p, f, t);
+		unsigned int w = coeff_idx(a, b);
 
 		if (a < N_ANT) {
 			reduced_mul[a].x = input_data[i].x * coeff[2*w] + input_data[i].y * coeff[2*w + 1];
@@ -202,7 +203,7 @@ void coherent_beamformer(cuComplex* input_data, float* coeff, float* output_data
 			__syncthreads();
 		}
 		if (a == 0) {
-			int h = coh_bf_idx(p, b, f, t);
+			unsigned int h = offset + coh_bf_idx(p, b, f, t);
 			output_data[2 * h] += reduced_mul[0].x;
 			output_data[2 * h + 1] += reduced_mul[0].y;
 		}
@@ -213,19 +214,19 @@ void coherent_beamformer(cuComplex* input_data, float* coeff, float* output_data
 
 // Compute power of beamformer output (abs()^2)
 __global__
-void beamformer_power(float* bf_volt, float* bf_power) {
+void beamformer_power(float* bf_volt, float* bf_power, unsigned int offset) {
 	int b = threadIdx.x; // Beam index
 	int f = blockIdx.x;  // Frequency bin index
 	int t = blockIdx.y;  // Time sample index
 
 	// Power = Absolute value squared of output -> r^2 + i^2
-	int xp = coh_bf_idx(0, b, f, t); // X polarization
-	int yp = coh_bf_idx(1, b, f, t); // Y polarization
+	unsigned int xp = offset + coh_bf_idx(0, b, f, t); // X polarization
+	unsigned int yp = offset + coh_bf_idx(1, b, f, t); // Y polarization
 	
 	float x_pol_pow = (bf_volt[2 * xp] * bf_volt[2 * xp]) + (bf_volt[2 * xp + 1] * bf_volt[2 * xp + 1]); // XX*
 	float y_pol_pow = (bf_volt[2 * yp] * bf_volt[2 * yp]) + (bf_volt[2 * yp + 1] * bf_volt[2 * yp + 1]); // YY*
 
-	bf_power[pow_bf_idx(b, f, t)] = x_pol_pow + y_pol_pow; // XX* + YY*
+	bf_power[offset + pow_bf_idx(b, f, t)] = x_pol_pow + y_pol_pow; // XX* + YY*
 
 	/*
 	bf_power[pow_bf_idx(0, b, f, t)] = (bf_volt[2*xp]*bf_volt[2*xp]) + (bf_volt[2*xp + 1]*bf_volt[2*xp + 1]); // XX*
@@ -247,9 +248,14 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 
 	cudaError_t err_code;
 
+	const unsigned int num_streams = 1; // Number of streams that make up all of the data. Split in frequency blocks (largest dimension)
+	const unsigned int freq_chans = N_FREQ/num_streams;
+	const int nStreams = num_streams; // Number of streams  
+	printf("Total frequency channels: %u , num streams: %d \n", freq_chans, nStreams);
+
 	// Transpose kernel: Specify grid and block dimensions
 	dim3 dimBlock_transpose(N_ANT, N_POL, 1);
-	dim3 dimGrid_transpose(N_FREQ, N_TIME, 1);
+	dim3 dimGrid_transpose(freq_chans, N_TIME, 1);
 
 	// Beamformer coefficient kernel (float to complex): Specify grid and block dimensions
 	//dim3 dimBlock_bf_coeff(N_ANT, N_POL, 1);
@@ -258,11 +264,11 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 	// Coherent beamformer kernel: Specify grid and block dimensions
 	//dim3 dimBlock_coh_bf(N_ANT, N_POL, 1);
 	dim3 dimBlock_coh_bf(N_ANT, 1, 1);
-	dim3 dimGrid_coh_bf(N_FREQ, N_TIME, N_BEAM);
+	dim3 dimGrid_coh_bf(freq_chans, N_TIME, N_BEAM);
 
 	// Output power of beamformer kernel: Specify grid and block dimensions
 	dim3 dimBlock_bf_pow(N_BEAM, 1, 1);
-	dim3 dimGrid_bf_pow(N_FREQ, N_TIME, 1);
+	dim3 dimGrid_bf_pow(freq_chans, N_TIME, 1);
 
 	float* d_data_in = d_data_float;
 	cuComplex* d_data_tra = d_data_comp;
@@ -271,71 +277,97 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 	//float* d_bf_output = d_coh_bf_out;
 	float* d_bf_pow = d_coh_bf_pow;
         
-	//printf("data_in[0] = %f \n", data_in[0]);
-	//printf("h_coefficient[0] = %f \n", h_coefficient[0]);
-	// Copy input data from host to device
-	checkCuda(cudaMemcpy(d_data_in, data_in, N_INPUT * sizeof(float), cudaMemcpyHostToDevice));
-	printf("First cudaMemcpy(HtoD) in run_beamformer() \n");
-
+	printf("Before cudaMemcpy(HtoD) coefficients! \n");
 	// Copy beamformer coefficients from host to device
 	checkCuda(cudaMemcpy(d_coefficient, h_coefficient, N_COEFF * sizeof(float), cudaMemcpyHostToDevice));
 	printf("Here cudaMemcpy(HtoD) coefficients! \n");
 
-	// Perform transpose on the data and convert to floats  
-	data_transpose<<<dimGrid_transpose, dimBlock_transpose >>>(d_data_in, d_data_tra);
-	err_code = cudaGetLastError();
-	if (err_code != cudaSuccess) {
-		printf("BF: data_transpose() kernel Failed: %s\n", cudaGetErrorString(err_code));
+	// CUDA streams and events applied for optimization to possibly eliminate stalls.
+	// cudaMemcpy(HtoD) and data_restructure kernel	
+	const unsigned int streamSizeIn = (unsigned int)(2*N_ANT*N_POL*N_TIME*freq_chans);
+	const unsigned long int streamBytesIn = (unsigned long int)(streamSizeIn * sizeof(float));
+	printf("Input size: %u in bytes: %lu \n", streamSizeIn, streamBytesIn);
+
+	// cudaMemcpy(HtoD) coefficients
+	//const int streamSizeCo = N_ANT*N_BEAM*N_TIME/nStreams;
+	//const int streamBytesCo = streamSizeCo * sizeof(float);
+
+	// coherent_beamformer kernel  
+	const unsigned int streamSizeBF = (unsigned int)(2*N_BEAM*N_POL*N_TIME*freq_chans);
+	//const unsigned int streamBytesBF = streamSizeBF * sizeof(float);
+	printf("BF output size: %u \n", streamSizeBF);
+
+	// beamformer_power kernel and cudaMemcpy(DtoH)
+	const unsigned int streamSizePow = (unsigned int)(N_BEAM*N_TIME*freq_chans);
+	const unsigned int streamBytesPow = streamSizePow * sizeof(float);	
+	printf("BF power output size: %u in bytes: %u \n", streamSizePow, streamBytesPow);
+
+	// Create events and streams
+	// Events ////////////////////////////////////
+	cudaEvent_t startEvent, stopEvent;
+	checkCuda(cudaEventCreate(&startEvent));
+	checkCuda(cudaEventCreate(&stopEvent));		
+	checkCuda(cudaEventRecord(startEvent, 0));
+	/////////////////////////////////////////////
+
+	cudaStream_t stream[nStreams];
+
+	for (int i = 0; i < nStreams; ++i) {
+		checkCuda(cudaStreamCreate(&stream[i]));
 	}
-	printf("Here data_transpose! \n");
 
-	// Convert weights from float to cuComplex    
-	//beamformer_coefficient<<<dimGrid_bf_coeff, dimBlock_bf_coeff >>>(d_coeff_f, d_coeff_c);
-	//printf("Here beamformer_coefficient! \n");
+	for (int i = 0; i < nStreams; ++i){
 
-	// Test for d_data_in
-	//cudaFree(d_data_in);
-	//float* d_bf_output = NULL;
-	//checkCuda(cudaMalloc((void **)&d_bf_output, N_OUTPUT * sizeof(float)));
+		unsigned int offset_in = i * streamSizeIn;
+		// Copy input data from host to device
+		checkCuda(cudaMemcpyAsync(&d_data_in[offset_in], &data_in[offset_in], streamBytesIn, cudaMemcpyHostToDevice, stream[i]));
+		printf("First cudaMemcpy(HtoD) in run_beamformer() \n");
 
-	// Perform beamforming operation
-	// Use d_data_in for output since it is no longer being utilized,
-	// and it is the same size as the output (4 GiB).
-	coherent_beamformer<<<dimGrid_coh_bf, dimBlock_coh_bf>>>(d_data_tra, d_coefficient, d_data_in);
-	//coherent_beamformer<<<dimGrid_coh_bf, dimBlock_coh_bf>>>(d_data_tra, d_coefficient, d_bf_output);
-	err_code = cudaGetLastError();
-	if (err_code != cudaSuccess) {
-		printf("BF: coherent_beamformer() kernel Failed: %s\n", cudaGetErrorString(err_code));
+		// Perform transpose on the data and convert to floats  
+		data_transpose<<<dimGrid_transpose, dimBlock_transpose, 0, stream[i]>>>(d_data_in, d_data_tra, offset_in);
+		err_code = cudaGetLastError();
+		if (err_code != cudaSuccess) {
+			printf("BF: data_transpose() kernel Failed: %s\n", cudaGetErrorString(err_code));
+		}
+		printf("Here data_transpose! \n");
+
+		// Perform beamforming operation
+		// Use d_data_in for output since it is no longer being utilized,
+		// and it is the same size as the output (4 GiB).
+		unsigned int offset_bf = i * streamSizeBF;
+		coherent_beamformer<<<dimGrid_coh_bf, dimBlock_coh_bf, 0, stream[i]>>>(d_data_tra, d_coefficient, d_data_in, offset_bf);
+		err_code = cudaGetLastError();
+		if (err_code != cudaSuccess) {
+			printf("BF: coherent_beamformer() kernel Failed: %s\n", cudaGetErrorString(err_code));
+		}
+		printf("Here coherent_beamformer! \n");	
+
+		// Compute power of beamformer output (abs()^2)
+		unsigned int offset_pow = i * streamSizePow;
+		beamformer_power<<<dimGrid_bf_pow, dimBlock_bf_pow, 0, stream[i]>>>(d_data_in, d_bf_pow, offset_pow);
+		err_code = cudaGetLastError();
+		if (err_code != cudaSuccess) {
+			printf("BF: beamformer_power() kernel Failed: %s\n", cudaGetErrorString(err_code));
+		}
+		printf("Here beamformer_power! \n");
+
+		// Copy output power from device to host
+		checkCuda(cudaMemcpyAsync(&data_out[offset_pow], &d_bf_pow[offset_pow], streamBytesPow, cudaMemcpyDeviceToHost, stream[i]));
+		printf("Here cudaMemcpy(DtoH)! \n");
+
 	}
-	printf("Here coherent_beamformer! \n");	
 
-	// Compute power of beamformer output (abs()^2)    
-	beamformer_power<<<dimGrid_bf_pow, dimBlock_bf_pow>>>(d_data_in, d_bf_pow);
-	//beamformer_power<<<dimGrid_bf_pow, dimBlock_bf_pow>>>(d_bf_output, d_bf_pow);
-	err_code = cudaGetLastError();
-	if (err_code != cudaSuccess) {
-		printf("BF: beamformer_power() kernel Failed: %s\n", cudaGetErrorString(err_code));
+	// Events ////////////////////////////////////
+	checkCuda(cudaEventRecord(stopEvent, 0));
+	checkCuda(cudaEventSynchronize(stopEvent));
+	/////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+	// Clean up streams
+	checkCuda(cudaEventDestroy(startEvent));
+	checkCuda(cudaEventDestroy(stopEvent));
+	for (int i = 0; i < nStreams; ++i) {
+		checkCuda(cudaStreamDestroy(stream[i]));
 	}
-	printf("Here beamformer_power! \n");
-
-	// Copy output power from device to host
-	//checkCuda(cudaMemcpy(data_out, d_bf_output, N_OUTPUT*sizeof(float), cudaMemcpyDeviceToHost));
-	//checkCuda(cudaMemcpy(data_out, d_data_tra, N_INPUT*sizeof(float), cudaMemcpyDeviceToHost));
-	checkCuda(cudaMemcpy(data_out, d_bf_pow, N_BF_POW*sizeof(float), cudaMemcpyDeviceToHost));
-	printf("Here cudaMemcpy(DtoH)! \n");
-
-	/*
-	// Option to copy output power or voltage to host
-	if(pow_flag == 0){
-		cudaMemcpy(data_out, d_bf_output, N_OUTPUT*sizeof(float), cudaMemcpyDeviceToHost);
-		checkCUDAerr(kern_idx);
-	}else{
-		beamformer_power<<<dimGrid_bf_pow, dimBlock_bf_pow>>>(d_bf_output, d_bf_pow);
-		checkCUDAerr(kern_idx);
-		cudaMemcpy(data_out, d_bf_pow, N_BF_POW*sizeof(float), cudaMemcpyDeviceToHost);
-		checkCUDAerr(kern_idx);
-	}
-	*/
 
 	return;
 }
@@ -618,9 +650,9 @@ int main() {
 	printf("After unregister.\n");	
 	free(sim_coefficients);
 	printf("After freeing coefficients.\n");
-	free(output_data);
+	free(output_data);	
 
-	printf("Freed dynamically allocated arrays.\n");
+	printf("Freed output array and unregistered arrays in pinned memory.\n");
 
 	// Free up device memory
 	//cudaFreeHost(h_data);
