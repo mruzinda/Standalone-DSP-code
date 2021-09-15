@@ -647,6 +647,7 @@ int main() {
 	printf("Closed output file.\n");
 
 	//unregister_data((float *)sim_data);
+	free(sim_data);
 	printf("After unregister.\n");	
 	free(sim_coefficients);
 	printf("After freeing coefficients.\n");

@@ -56,6 +56,7 @@ float* simulate_data();
 float* simulate_coefficients();
 void input_data_pin(float * data_pin);
 //void coefficient_pin(float * coeff_pin);
+void unregister_data(void * data_unregister);
 void cohbfCleanup();
 void run_beamformer(float* data_in, float* coefficient, float* data_out); // Run beamformer
 #ifdef __cplusplus
