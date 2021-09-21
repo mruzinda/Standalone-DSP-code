@@ -353,7 +353,7 @@ float* simulate_data() {
 	sim_flag = 2 -> Sequence of 1 to 64 placed in a particular bin (bin 6 for now)
 	sim flag = 3 -> Simulated radio source in center beam assuming ULA
 	*/
-	int sim_flag = 3;
+	int sim_flag = 1;
 	if (sim_flag == 0) {
 		for (int i = 0; i < (N_INPUT / 2); i++) {
 			data_sim[2 * i] = 1;
@@ -397,25 +397,30 @@ float* simulate_data() {
 		float d = lambda / 2; // Distance between antennas
 		float chan_band = 1; // Fine channel bandwidth in Hz
 
-		float* rf_freqs = (float*)calloc(N_FREQ, sizeof(float));
-		for (int i = 0; i < N_FREQ; i++) {
-			rf_freqs[i] = chan_band * i + c_freq;
-		}
+		//float* rf_freqs = (float*)calloc(N_FREQ, sizeof(float));
+		//for (int i = 0; i < N_FREQ; i++) {
+		//	rf_freqs[i] = chan_band * i + c_freq;
+		//}
 
-		float* theta = (float*)calloc(N_TIME, sizeof(float)); // SOI direction/angle of arrival
-		float* tau = (float*)calloc(N_TIME, sizeof(float)); // Delay
+		//float* theta = (float*)calloc(N_TIME, sizeof(float)); // SOI direction/angle of arrival
+		//float* tau = (float*)calloc(N_TIME, sizeof(float)); // Delay
+
+		float theta = 0; // SOI direction/angle of arrival
+		float tau = 0; // Delay
+		float rf_freqs = 0;
 
 		for (int t = 0; t < N_TIME; t++) {
-			theta[t] = (t - (N_TIME / 2)) + 90; // SOI direction/angle of arrival -> Moving across array over time i.e. angle changes each time sample
-			tau[t] = d * cos(theta[t]) / c; // Delay
+			theta = (t - (N_TIME / 2)) + 90; // SOI direction/angle of arrival -> Moving across array over time i.e. angle changes each time sample
+			tau = d * cos(theta) / c; // Delay
 			for (int f = 0; f < N_FREQ; f++) {
+				rf_freqs = chan_band * f + c_freq;
 				for (int a = 0; a < N_ANT; a++) {
 					// X polarization
-					data_sim[2 * data_in_idx(a, 0, f, t)] = cos(2 * PI * rf_freqs[f] * a * tau[t]);
-					data_sim[2 * data_in_idx(a, 0, f, t) + 1] = sin(2 * PI * rf_freqs[f] * a * tau[t]);
+					data_sim[2 * data_in_idx(a, 0, f, t)] = cos(2 * PI * rf_freqs * a * tau);
+					data_sim[2 * data_in_idx(a, 0, f, t) + 1] = sin(2 * PI * rf_freqs * a * tau);
 					// Y polarization
-					data_sim[2 * data_in_idx(a, 1, f, t)] = cos(2 * PI * rf_freqs[f] * a * tau[t]);
-					data_sim[2 * data_in_idx(a, 1, f, t) + 1] = sin(2 * PI * rf_freqs[f] * a * tau[t]); // Make this negative if a different polarization is tested
+					data_sim[2 * data_in_idx(a, 1, f, t)] = cos(2 * PI * rf_freqs * a * tau);
+					data_sim[2 * data_in_idx(a, 1, f, t) + 1] = sin(2 * PI * rf_freqs * a * tau); // Make this negative if a different polarization is tested
 				}
 			}
 		}
@@ -439,7 +444,7 @@ float* simulate_coefficients() {
 	sim_flag = 2 -> Scale each beam by incrementing value in a particular bin (bin 3 and 6 for now). Match simulated data sim_flag = 2
 	sim flag = 3 -> Simulated beams from 58 to 122 degrees. Assuming a ULA.
 	*/
-	int sim_flag = 3;
+	int sim_flag = 0;
 	if (sim_flag == 0) {
 		for (int i = 0; i < (N_COEFF / 2); i++) {
 			coeff_sim[2 * i] = 1;
@@ -483,15 +488,18 @@ float* simulate_coefficients() {
 		//	rf_freqs[i] = chan_band * i + c_freq;
 		//}
 
-		float* theta = (float*)calloc(N_TIME, sizeof(float)); // Beam angle from 58 to 122 degrees
-		float* tau_beam = (float*)calloc(N_BEAM, sizeof(float)); // Delay
+		//float* theta = (float*)calloc(N_TIME, sizeof(float)); // Beam angle from 58 to 122 degrees
+		//float* tau_beam = (float*)calloc(N_BEAM, sizeof(float)); // Delay
+
+		float theta = 0; // Beam angle from 58 to 122 degrees
+		float tau_beam = 0; // Delay
 
 		for (int b = 0; b < N_BEAM; b++) {
-			theta[b] = (b - (N_BEAM / 2)) + 90; // Beam angle from 58 to 122 degrees - Given SOI at 90 deg or moving across array, the beam with the most power is beamm 33
-			tau_beam[b] = d * cos(theta[b]) / c; // Delay
+			theta = (b - (N_BEAM / 2)) + 90; // Beam angle from 58 to 122 degrees - Given SOI at 90 deg or moving across array, the beam with the most power is beamm 33
+			tau_beam = d * cos(theta) / c; // Delay
 			for (int a = 0; a < N_ANT; a++) {
-				coeff_sim[2 * coeff_idx(a, b)] = cos(2 * PI * c_freq * a * tau_beam[b]);
-				coeff_sim[2 * coeff_idx(a, b) + 1] = sin(2 * PI * c_freq * a * tau_beam[b]);
+				coeff_sim[2 * coeff_idx(a, b)] = cos(2 * PI * c_freq * a * tau_beam);
+				coeff_sim[2 * coeff_idx(a, b) + 1] = sin(2 * PI * c_freq * a * tau_beam);
 			}
 		}
 	}
@@ -505,8 +513,15 @@ float* simulate_coefficients() {
 // The input_data_pin() function uses cudaHostRegister() to allocate the input host
 // array in pinned memory.
 // This speeds up the cudaMemcpy() and enables implementation into HASHPIPE/RTOS.
-void input_data_pin(float * data_pin) {
-	checkCuda(cudaHostRegister(data_pin, N_INPUT*sizeof(float), cudaHostRegisterPortable));
+void input_data_pin(float * data_in_pin) {
+	checkCuda(cudaHostRegister(data_in_pin, N_INPUT*sizeof(float), cudaHostRegisterPortable));
+}
+
+// The output_data_pin() function uses cudaHostRegister() to allocate the output host
+// array in pinned memory.
+// This speeds up the cudaMemcpy() and enables implementation into HASHPIPE/RTOS.
+void output_data_pin(float * data_out_pin) {
+	checkCuda(cudaHostRegister(data_out_pin, N_BF_POW*sizeof(float), cudaHostRegisterPortable));
 }
 
 // The coefficient_pin() function uses cudaHostRegister() to allocate the input host
@@ -577,6 +592,7 @@ int main() {
 	float* output_data;
 	output_data = (float*)calloc(N_BF_POW, sizeof(float));
 	//output_data = (float*)calloc(N_OUTPUT, sizeof(float));
+	output_data_pin(output_data);
 
 	printf("Here5!\n");
 
@@ -604,6 +620,7 @@ int main() {
 
 	printf("Here10!\n");
 
+	//for (int ii = 0; ii < N_INPUT; ii++) {
 	for (int ii = 0; ii < N_BF_POW; ii++) {
 		fprintf(output_file, "%g\n", output_data[ii]);
 	}
@@ -615,11 +632,11 @@ int main() {
 	printf("Closed output file.\n");
 
 	//unregister_data((float *)sim_data);
-	free(sim_data);
+	//free(sim_data);
 	printf("After unregister.\n");	
 	free(sim_coefficients);
 	printf("After freeing coefficients.\n");
-	free(output_data);
+	//free(output_data);
 
 	printf("Freed dynamically allocated arrays.\n");
 

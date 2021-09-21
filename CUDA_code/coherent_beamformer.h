@@ -8,7 +8,7 @@
 #define N_TIME 8 // 8                   // Number of time samples
 #define N_COARSE_FREQ 32               // Number of coarse channels processed at a time
 #define N_FINE_FREQ 16384               // Number of fine channels per coarse channel 2^14 = 16384
-#define N_FREQ N_COARSE_FREQ*N_FINE_FREQ // Number of frequency bins after second FFT.  Should actually be 2^14, but due to limited memory on my laptop, arbitrarily 10
+#define N_FREQ 10 // N_COARSE_FREQ*N_FINE_FREQ // Number of frequency bins after second FFT.  Should actually be 2^14, but due to limited memory on my laptop, arbitrarily 10
 #define N_ANT 64 // 64                  // Number of antennas
 #define N_BEAM 64 // 64                 // Number of beams
 //#define N_POL_OUT 4 //2    // Number of output polarizations 
@@ -54,7 +54,8 @@ extern "C" {
 void init_beamformer(); // Allocate memory to all arrays 
 float* simulate_data();
 float* simulate_coefficients();
-void input_data_pin(float * data_pin);
+void input_data_pin(float * data_in_pin);
+void output_data_pin(float * data_out_pin);
 //void coefficient_pin(float * coeff_pin);
 void unregister_data(void * data_unregister);
 void cohbfCleanup();
