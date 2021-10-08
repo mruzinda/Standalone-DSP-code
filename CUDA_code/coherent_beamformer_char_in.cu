@@ -41,6 +41,8 @@ void coherent_beamformer(cuComplex* input_data, float* coeff, float* output_data
 // Compute power of beamformer output (abs()^2)
 __global__
 void beamformer_power(float* bf_volt, float* bf_power, int offset);
+//void beamformer_power(float* bf_volt, signed char* bf_power, int offset);
+
 
 // Convenience function for checking CUDA runtime API results
 // can be wrapped around any runtime API call. No-op in release builds.
@@ -67,6 +69,8 @@ float* d_coeff = NULL;
 //float* d_coh_bf_out = NULL;
 float* d_coh_bf_pow = NULL;
 float* h_bf_pow = NULL;
+//signed char* d_coh_bf_pow = NULL;
+//signed char* h_bf_pow = NULL;
 // Allocate memory to all arrays 
 void init_beamformer() {
 	printf("Here In init_beamformer()! \n");
@@ -112,6 +116,11 @@ void init_beamformer() {
 	printf("Here 4th cudaMalloc! \n");
 
 	checkCuda(cudaMallocHost((void **)&h_bf_pow, (N_BF_POW) * sizeof(float)));
+
+	//checkCuda(cudaMalloc((void **)&d_coh_bf_pow, (N_BF_POW) * sizeof(signed char)));
+	//printf("Here 4th cudaMalloc! \n");
+
+	//checkCuda(cudaMallocHost((void **)&h_bf_pow, (N_BF_POW) * sizeof(signed char)));
 
 	return;
 }
@@ -222,6 +231,7 @@ void coherent_beamformer(cuComplex* input_data, float* coeff, float* output_data
 	return;
 }
 
+
 // Compute power of beamformer output (abs()^2)
 __global__
 void beamformer_power(float* bf_volt, float* bf_power, int offset) {
@@ -233,26 +243,77 @@ void beamformer_power(float* bf_volt, float* bf_power, int offset) {
 		// Power = Absolute value squared of output -> r^2 + i^2
 		int xp = coh_bf_idx(0, b, (f + offset), t); // X polarization
 		int yp = coh_bf_idx(1, b, (f + offset), t); // Y polarization
-	
+		
 		float x_pol_pow = (bf_volt[2 * xp] * bf_volt[2 * xp]) + (bf_volt[2 * xp + 1] * bf_volt[2 * xp + 1]); // XX*
 		float y_pol_pow = (bf_volt[2 * yp] * bf_volt[2 * yp]) + (bf_volt[2 * yp + 1] * bf_volt[2 * yp + 1]); // YY*
 
 		int h = pow_bf_idx(b, (f + offset), t);
 		bf_power[h] = x_pol_pow + y_pol_pow; // XX* + YY*
 	}
-	/*
-	bf_power[pow_bf_idx(0, b, f, t)] = (bf_volt[2*xp]*bf_volt[2*xp]) + (bf_volt[2*xp + 1]*bf_volt[2*xp + 1]); // XX*
-	bf_power[pow_bf_idx(1, b, f, t)] = (bf_volt[2*yp]*bf_volt[2*yp]) + (bf_volt[2*yp + 1]*bf_volt[2*yp + 1]); // YY*
-	bf_power[pow_bf_idx(2, b, f, t)] = (bf_volt[2*xp]*bf_volt[2*yp]) + (bf_volt[2*xp + 1]*bf_volt[2*yp + 1]); // XY* real
-	bf_power[pow_bf_idx(3, b, f, t)] = (bf_volt[2*xp + 1]*bf_volt[2*yp]) - (bf_volt[2*xp]*bf_volt[2*yp + 1]); // XY* imag
-	*/
-
+	
+	//bf_power[pow_bf_idx(0, b, f, t)] = (bf_volt[2*xp]*bf_volt[2*xp]) + (bf_volt[2*xp + 1]*bf_volt[2*xp + 1]); // XX*
+	//bf_power[pow_bf_idx(1, b, f, t)] = (bf_volt[2*yp]*bf_volt[2*yp]) + (bf_volt[2*yp + 1]*bf_volt[2*yp + 1]); // YY*
+	//bf_power[pow_bf_idx(2, b, f, t)] = (bf_volt[2*xp]*bf_volt[2*yp]) + (bf_volt[2*xp + 1]*bf_volt[2*yp + 1]); // XY* real
+	//bf_power[pow_bf_idx(3, b, f, t)] = (bf_volt[2*xp + 1]*bf_volt[2*yp]) - (bf_volt[2*xp]*bf_volt[2*yp + 1]); // XY* imag
+	
 	return;
 }
 
+/*
+// Compute power of beamformer output (abs()^2)
+__global__
+void beamformer_power(float* bf_volt, signed char* bf_power, int offset) {
+//void beamformer_power(float* bf_volt, float* bf_power, int offset) {
+	int b = threadIdx.x; // Beam index
+	int f = blockIdx.x;  // Frequency bin index
+	int t = blockIdx.y;  // Time sample index
+
+	if(f < N_FREQ_STREAM){	
+		// Power = Absolute value squared of output -> r^2 + i^2
+		int xp = coh_bf_idx(0, b, (f + offset), t); // X polarization
+		int yp = coh_bf_idx(1, b, (f + offset), t); // Y polarization
+		
+		float x_pol_pow = (bf_volt[2 * xp] * bf_volt[2 * xp]) + (bf_volt[2 * xp + 1] * bf_volt[2 * xp + 1]); // XX*
+		float y_pol_pow = (bf_volt[2 * yp] * bf_volt[2 * yp]) + (bf_volt[2 * yp + 1] * bf_volt[2 * yp + 1]); // YY*
+
+		float tmp_pow = x_pol_pow + y_pol_pow; // XX* + YY*
+		// int h = pow_bf_idx(b, (f + offset), t);
+		// bf_power[h] = x_pol_pow + y_pol_pow; // XX* + YY*
+
+		int xi = coh_bf_idx(0, 0, 0, 0);
+		int yi = coh_bf_idx(1, 0, 0, 0);
+		float tmp_x_pol_pow = (bf_volt[2 * xi] * bf_volt[2 * xi]) + (bf_volt[2 * xi + 1] * bf_volt[2 * xi + 1]); // XX*
+		float tmp_y_pol_pow = (bf_volt[2 * yi] * bf_volt[2 * yi]) + (bf_volt[2 * yi + 1] * bf_volt[2 * yi + 1]); // YY*
+		float tmp_pow_init = tmp_x_pol_pow + tmp_y_pol_pow;
+
+
+		// Find minimum value of total power
+		float min_pow = tmp_pow_init;
+		min_pow = min(min_pow, tmp_pow);
+
+		// Find maximum value of total power
+		float max_pow = tmp_pow_init;
+		max_pow = max(max_pow, tmp_pow);
+
+		// Requantize output from 32 bit floats to 8 bit signed chars
+		int h = pow_bf_idx(b, (f + offset), t);
+		bf_power[h] = (signed char)((((tmp_pow - min_pow)/(max_pow - min_pow)) - 0.5)*256); // XX* + YY*
+	}
+	
+	
+	//bf_power[pow_bf_idx(0, b, f, t)] = (bf_volt[2*xp]*bf_volt[2*xp]) + (bf_volt[2*xp + 1]*bf_volt[2*xp + 1]); // XX*
+	//bf_power[pow_bf_idx(1, b, f, t)] = (bf_volt[2*yp]*bf_volt[2*yp]) + (bf_volt[2*yp + 1]*bf_volt[2*yp + 1]); // YY*
+	//bf_power[pow_bf_idx(2, b, f, t)] = (bf_volt[2*xp]*bf_volt[2*yp]) + (bf_volt[2*xp + 1]*bf_volt[2*yp + 1]); // XY* real
+	//bf_power[pow_bf_idx(3, b, f, t)] = (bf_volt[2*xp + 1]*bf_volt[2*yp]) - (bf_volt[2*xp]*bf_volt[2*yp + 1]); // XY* imag
+	
+
+	return;
+}
+*/
 // Run beamformer
 //void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 float* run_beamformer(signed char* data_in, float* h_coefficient) {
+//signed char* run_beamformer(signed char* data_in, float* h_coefficient) {
 	/*
 	// Allocate input data in pinned memory
 	// (This may take longer than it's worth to implement pinned memory)
@@ -264,7 +325,7 @@ float* run_beamformer(signed char* data_in, float* h_coefficient) {
 	//const int freq_chans = N_FREQ_STREAM;
 	const int nStreams = N_STREAMS; // Number of streams that make up all of the data. Split in frequency blocks (largest dimension)
 	//printf("Total frequency channels: %d , num streams: %d \n", freq_chans, nStreams);
-	printf("Total frequency channels: %d , num streams: %d \n", N_FREQ_STREAM, nStreams);
+	//printf("Total frequency channels: %d , num streams: %d \n", N_FREQ_STREAM, nStreams);
 
 	// Transpose kernel: Specify grid and block dimensions
 	dim3 dimBlock_transpose(N_ANT, N_POL, 1);
@@ -291,11 +352,14 @@ float* run_beamformer(signed char* data_in, float* h_coefficient) {
 	//float* d_bf_output = d_coh_bf_out;
 	float* d_bf_pow = d_coh_bf_pow;
 	float* data_out = h_bf_pow;
-        
-	printf("Before cudaMemcpy(HtoD) coefficients! \n");
+
+	//signed char* d_bf_pow = d_coh_bf_pow;
+	//signed char* data_out = h_bf_pow;
+
+	//printf("Before cudaMemcpy(HtoD) coefficients! \n");
 	// Copy beamformer coefficients from host to device
 	checkCuda(cudaMemcpy(d_coefficient, h_coefficient, N_COEFF * sizeof(float), cudaMemcpyHostToDevice));
-	printf("Here cudaMemcpy(HtoD) coefficients! \n");
+	//printf("Here cudaMemcpy(HtoD) coefficients! \n");
 
 	// CUDA streams and events applied for optimization to possibly eliminate stalls.
 	// cudaMemcpy(HtoD) and data_restructure kernel	
@@ -303,7 +367,7 @@ float* run_beamformer(signed char* data_in, float* h_coefficient) {
 	//const int streamSizeIn = freq_chans;
 	//const unsigned long int streamBytesIn = (2*N_ANT*N_POL*N_TIME*N_FREQ_STREAM*sizeof(float));
 	const unsigned long int streamBytesIn = (2*N_ANT*N_POL*N_TIME*N_FREQ_STREAM*sizeof(signed char));
-	printf("Input size: %d in bytes: %lu \n", streamSizeIn, streamBytesIn);
+	//printf("Input size: %d in bytes: %lu \n", streamSizeIn, streamBytesIn);
 
 	// cudaMemcpy(HtoD) coefficients
 	//const int streamSizeCo = N_ANT*N_BEAM*N_TIME/nStreams;
@@ -317,8 +381,9 @@ float* run_beamformer(signed char* data_in, float* h_coefficient) {
 	// beamformer_power kernel and cudaMemcpy(DtoH)
 	const int streamSizePow = (N_BEAM*N_TIME*N_FREQ_STREAM);
 	//const int streamSizePow = freq_chans;
-	const unsigned long int streamBytesPow = (N_BEAM*N_TIME*N_FREQ_STREAM*sizeof(float));	
-	printf("BF power output size: %d in bytes: %lu \n", streamSizePow, streamBytesPow);
+	const unsigned long int streamBytesPow = (N_BEAM*N_TIME*N_FREQ_STREAM*sizeof(float));
+	//const unsigned long int streamBytesPow = (N_BEAM*N_TIME*N_FREQ_STREAM*sizeof(signed char));	
+	//printf("BF power output size: %d in bytes: %lu \n", streamSizePow, streamBytesPow);
 
 	// Create events and streams
 	// Events ////////////////////////////////////
@@ -336,12 +401,12 @@ float* run_beamformer(signed char* data_in, float* h_coefficient) {
 
 	for (int i = 0; i < nStreams; ++i){
 
-		int offset = i * N_FREQ_STREAM;
+		//int offset = i * N_FREQ_STREAM;
 		int offset_in = i * streamSizeIn;
 		// Copy input data from host to device
 		checkCuda(cudaMemcpyAsync(&d_data_in[offset_in], &data_in[offset_in], streamBytesIn, cudaMemcpyHostToDevice, stream[i]));
 		//checkCuda(cudaMemcpyAsync(d_data_in, &data_in[offset_in], streamBytesIn, cudaMemcpyHostToDevice, stream[i]));
-		printf("First cudaMemcpyAsync(HtoD) in run_beamformer(), offset_in = %d and offset = %d \n", offset_in, offset);
+		//printf("First cudaMemcpyAsync(HtoD) in run_beamformer(), offset_in = %d and offset = %d \n", offset_in, offset);
 	}
 	for (int i = 0; i < nStreams; ++i){
 		int offset = i * N_FREQ_STREAM;
@@ -351,7 +416,7 @@ float* run_beamformer(signed char* data_in, float* h_coefficient) {
 		if (err_code != cudaSuccess) {
 			printf("BF: data_transpose() kernel Failed: %s\n", cudaGetErrorString(err_code));
 		}
-		printf("Here data_transpose! \n");
+		//printf("Here data_transpose! \n");
 	}
 	for (int i = 0; i < nStreams; ++i){
 		int offset = i * N_FREQ_STREAM;
@@ -369,20 +434,20 @@ float* run_beamformer(signed char* data_in, float* h_coefficient) {
 	for (int i = 0; i < nStreams; ++i){
 		int offset = i * N_FREQ_STREAM;
 		// Compute power of beamformer output (abs()^2)
-		int offset_pow = i * streamSizePow;
+		//int offset_pow = i * streamSizePow;
 		beamformer_power<<<dimGrid_bf_pow, dimBlock_bf_pow, 0, stream[i]>>>(d_data_bf, d_bf_pow, offset);
 		err_code = cudaGetLastError();
 		if (err_code != cudaSuccess) {
 			printf("BF: beamformer_power() kernel Failed: %s\n", cudaGetErrorString(err_code));
 		}
-		printf("Here beamformer_power, offset_pow = %d and offset = %d \n", offset_pow, offset);
+		//printf("Here beamformer_power, offset_pow = %d and offset = %d \n", offset_pow, offset);
 	}
 	for (int i = 0; i < nStreams; ++i){
 		int offset_pow = i * streamSizePow;
 		// Copy output power from device to host
 		checkCuda(cudaMemcpyAsync(&data_out[offset_pow], &d_bf_pow[offset_pow], streamBytesPow, cudaMemcpyDeviceToHost, stream[i]));
 		//checkCuda(cudaMemcpyAsync(&data_out[offset_pow], d_bf_pow, streamBytesPow, cudaMemcpyDeviceToHost, stream[i]));
-		printf("Here cudaMemcpyAsync(DtoH)! \n");
+		//printf("Here cudaMemcpyAsync(DtoH)! \n");
 
 	}
 
@@ -639,7 +704,7 @@ void cohbfCleanup() {
 }
 
 //Comment out main() function when compiling for hpguppi
-/* // <----Uncomment here if testing standalone code
+ // <----Uncomment here if testing standalone code
 // Test all of the kernels and functions, and write the output to
 // a text file for analysis
 int main() {
@@ -698,6 +763,7 @@ int main() {
 	printf("Here10!\n");
 
 	for (int ii = 0; ii < N_BF_POW; ii++) {
+		//fprintf(output_file, "%c\n", output_data[ii]);
 		fprintf(output_file, "%g\n", output_data[ii]);
 	}
 
@@ -725,4 +791,4 @@ int main() {
 
 	return 0;
 }
-*/ // <----Uncomment here if testing standalone code
+ // <----Uncomment here if testing standalone code

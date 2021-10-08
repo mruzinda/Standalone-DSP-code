@@ -5,7 +5,7 @@
 
 
 #define N_POL 2 //2                     // Number of polarizations
-#define N_TIME 8 // 8                   // Number of time samples
+#define N_TIME 1 // 8                   // Number of time samples
 #define N_STREAMS 1                     // Number of CUDA streams
 #define N_COARSE_FREQ 32               // Number of coarse channels processed at a time
 #define N_FINE_FREQ 16384               // Number of fine channels per coarse channel 2^14 = 16384
@@ -22,6 +22,13 @@
 #define N_OUTPUT (unsigned long int)(2*N_POL*N_BEAM*N_FREQ*N_TIME)      // Size of beamformer output
 #define N_BF_POW (unsigned long int)(N_BEAM*N_FREQ*N_TIME)              // Size of beamformer output after abs()^2
 //#define N_BF_POW N_POL_OUT*N_BEAM*N_FREQ*N_TIME    // Size of beamformer output after abs()^2
+
+#ifndef min
+#define min(a,b) ((a < b) ? a : b)
+#endif
+#ifndef max
+#define max(a,b) ((a > b) ? a : b)
+#endif
 
 #define PI 3.14159265
 
@@ -63,6 +70,7 @@ void coeff_pin(float * data_coeff_pin);
 void unregister_data(void * data_unregister);
 void cohbfCleanup();
 //void run_beamformer(float* data_in, float* coefficient, float* data_out); // Run beamformer
+//float *run_beamformer(float* data_in, float* coefficient, float* data_out); // Run beamformer
 float* run_beamformer(signed char* data_in, float* coefficient); // Run beamformer
 #ifdef __cplusplus
 }
