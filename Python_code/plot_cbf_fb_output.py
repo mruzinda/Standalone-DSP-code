@@ -1,14 +1,19 @@
 # This script reshapes the one dimensional array from the beamformer and plots the response for analysis
+# Run with the following command:
+# python plot_cbf_fb_output.py <filename e.g. /datag/users/mruzinda/out_txt/output_d_test.txt>
 import matplotlib.pyplot as plt
 from array import array
 import numpy as np
+import sys
 
 # Open text file containing beamformer output
 #f = open("output_d_c.txt", 'r')
 # = open("output_d_cuda.txt", 'r')
 #f = open("output_d_c_simple.txt", 'r')
 #f = open("output_d_cuda_simple.txt", 'r')
-f = open("/datag/users/mruzinda/out_txt/output_d_test.txt", 'r')
+txt_filename = sys.argv[1]
+f = open(txt_filename, 'r')
+#f = open("/datag/users/mruzinda/out_txt/output_d_test.txt", 'r')
 
 # Read file contents
 contents = f.read()
@@ -29,8 +34,8 @@ for i in range(0,len(contents_tmp)-1):
 
 # After processing .raw file and writing to filterbank file
 N_beam = 64
-N_bin = 32*16384
-N_time = 1
+N_bin = 32
+N_time = 16384
 
 # Reshape array to 3D -> Time X Bins X Beams
 contents_array = contents_float[0:(N_time*N_bin*N_beam)].reshape(N_time,N_bin,N_beam)
@@ -41,12 +46,15 @@ time_idx = 0 # time sample index to plot
 # Plot intensity map of frequency vs. time
 # "interpolation ='none'" removes interpolation which was there by default. 
 # I'm only removing it for the sake of accurate analysis and diagnosis.
-plt.imshow(contents_array[0:N_time,0:N_bin,beam_idx], extent=[1, N_bin, 1, N_time], interpolation='none')
+plt.imshow(contents_array[0:N_time,0:N_bin,beam_idx], extent=[1, N_bin, 1, N_time], interpolation='bicubic')
+#plt.imshow(contents_array[0:N_time,0:N_bin,beam_idx], extent=[1, N_bin, 1, N_time], interpolation='none')
 #plt.imshow(contents_array[0:N_time,0:N_bin,beam_idx], extent=[1, N_bin, 1, N_time], interpolation='bicubic')
 plt.title('Intensity map (Frequency vs. time)')
 plt.ylabel('Time samples')
 plt.xlabel('Frequency bins')
 plt.show()
+
+print("After waterfall plot")
 
 # Plot of power spectrum
 plt.plot(contents_array[time_idx,0:N_bin,beam_idx])
@@ -54,6 +62,8 @@ plt.title('Power spectrum at a time sample')
 plt.xlabel('Frequency bins')
 plt.ylabel('Power (arb.)')
 plt.show()
+
+print("After power spectral plot")
 
 #fig, axs = plt.subplots(1, 2)
 #fig.suptitle('Power spectra of individual beams')
@@ -89,6 +99,8 @@ for ax in axs.flat:
 #    ax.label_outer()
 plt.show()
 
+print("After 1st subplot")
+
 # Plot of power over time
 freq_idx = 5 # Frequency to plot
 plt.plot(contents_array[0:N_time,freq_idx,beam_idx])
@@ -96,6 +108,8 @@ plt.title('Power over time at a particular frequency')
 plt.xlabel('Time samples')
 plt.ylabel('Power (arb.)')
 plt.show()
+
+print("After second power spectral plot")
 
 fig, axs = plt.subplots(2, 2)
 fig.suptitle('Power over time of individual beams')
@@ -123,6 +137,8 @@ for ax in axs.flat:
 #for ax in axs.flat:
 #    ax.label_outer()
 plt.show()
+
+print("After 2nd subplot")
 
 f.close()
 

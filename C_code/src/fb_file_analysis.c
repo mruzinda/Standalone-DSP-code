@@ -1,7 +1,12 @@
 #include <stdio.h>
+#include <unistd.h>
+#include <stdint.h>
+#include <endian.h>
+#include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <string.h>
 #include "rawspec_fbutils.h"
 #include "coherent_beamformer_char_in.h"
 
@@ -60,6 +65,7 @@ int main(int argc, char * argv[])
     		printf("header size %lu bytes\n", hdr_size);
     		printf("fch1 %.17g\n", hdr.fch1);
 		printf("foff %.17g\n", hdr.foff);
+		printf("nbeams %d\n", hdr.nbeams);
 		int sz;
 		int blk_plus_hdr = hdr_size+N_BF_POW;
 		float * buff = (float *)calloc(blk_plus_hdr, sizeof(float));
