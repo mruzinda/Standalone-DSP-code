@@ -6,8 +6,9 @@ import numpy as np
 # Open text file containing beamformer output
 #f = open("output_d_c.txt", 'r')
 # = open("output_d_cuda.txt", 'r')
-f = open("output_d_c_simple.txt", 'r')
+#f = open("output_d_c_simple.txt", 'r')
 #f = open("output_d_cuda_simple.txt", 'r')
+f = open("/datag/users/mruzinda/out_txt/output_d_test.txt", 'r')
 
 # Read file contents
 contents = f.read()
@@ -21,9 +22,15 @@ for i in range(0,len(contents_tmp)-1):
     contents_float[i] = float(contents_tmp[i])
 
 # Array dimensions
+# For simulated smaller set of data
+#N_beam = 64
+#N_bin = 10
+#N_time = 8
+
+# After processing .raw file and writing to filterbank file
 N_beam = 64
-N_bin = 10
-N_time = 8
+N_bin = 32*16384
+N_time = 1
 
 # Reshape array to 3D -> Time X Bins X Beams
 contents_array = contents_float[0:(N_time*N_bin*N_beam)].reshape(N_time,N_bin,N_beam)
