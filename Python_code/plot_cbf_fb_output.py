@@ -46,7 +46,9 @@ time_idx = 0 # time sample index to plot
 # Plot intensity map of frequency vs. time
 # "interpolation ='none'" removes interpolation which was there by default. 
 # I'm only removing it for the sake of accurate analysis and diagnosis.
-plt.imshow(contents_array[0:N_time,0:N_bin,beam_idx], extent=[1, N_bin, 1, N_time], interpolation='bicubic')
+plt.imshow(contents_array[0:999,0:N_bin,beam_idx], extent=[1, N_bin, 1, 1000], interpolation='none')
+# Example plotting next window of time samples
+#plt.imshow(contents_array[1000:1999,0:N_bin,beam_idx], extent=[1, N_bin, 1, 1000], interpolation='none')
 #plt.imshow(contents_array[0:N_time,0:N_bin,beam_idx], extent=[1, N_bin, 1, N_time], interpolation='none')
 #plt.imshow(contents_array[0:N_time,0:N_bin,beam_idx], extent=[1, N_bin, 1, N_time], interpolation='bicubic')
 plt.title('Intensity map (Frequency vs. time)')
