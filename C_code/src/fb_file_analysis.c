@@ -76,7 +76,7 @@ int main(int argc, char * argv[])
 		printf("foff %.17g\n", hdr.foff);
 		printf("nbeams %d\n", hdr.nbeams);
 		int sz;
-		int ics_flag = 0;
+		int ics_flag = 0; // Set to 1 if the incoherent sum processed the GUPPI RAW file
 		int blk_size = 0;
 		if(ics_flag == 1){
 			blk_size = N_BF_POW/N_BEAM;
@@ -99,7 +99,9 @@ int main(int argc, char * argv[])
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test1.txt"); // ics upchannelized
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test2.txt"); // ics no upchannelization
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test3.txt"); // cbf
-		strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test4.txt"); // sim-cbf
+		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test4.txt"); // sim-cbf
+		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test5.txt"); // cbf-after simulated data was correct
+		strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test6.txt"); // ics no upchannelization -after simulated data was correct
 
 		FILE* output_file;
 
