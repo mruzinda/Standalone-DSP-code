@@ -61,6 +61,7 @@
 extern "C" {
 #endif
 void init_beamformer(); // Allocate memory to all arrays 
+void set_to_zero(); // Set arrays to zero after a block is processed
 signed char* simulate_data();
 float* simulate_coefficients();
 //void input_data_pin(float * data_in_pin);

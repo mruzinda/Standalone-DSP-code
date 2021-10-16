@@ -1,3 +1,12 @@
+// This script reads the filterbank files gets a block of data and writes it to a text file for further processing.
+// To compile it:
+// gcc fb_file_analysis.c -o fb_file_analysis.exe -I/home/mruzinda/beamformer_workspace/include -L/home/mruzinda/beamformer_workspace/lib/ -lrawspec
+// To run it:
+// ./fb_file_analysis.exe /datag/users/mruzinda/oics/guppi_59143_55142_000486_GPS-BIIR-11_0001-ics.rawspec.0000.fil
+// where the file in the argument is an example
+// Remember to change the ics_flag in the code to 1 if you are processing incoherent sum data.
+// And change the filename of the text file if necessary.
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdint.h>
@@ -67,22 +76,36 @@ int main(int argc, char * argv[])
 		printf("foff %.17g\n", hdr.foff);
 		printf("nbeams %d\n", hdr.nbeams);
 		int sz;
-		int blk_plus_hdr = hdr_size+N_BF_POW;
-		float * buff = (float *)calloc(blk_plus_hdr, sizeof(float));
-		sz = read(fd, buff, blk_plus_hdr);
-		float * data_payload = (float *)(buff + hdr_size);
+		int ics_flag = 0;
+		int blk_size = 0;
+		if(ics_flag == 1){
+			blk_size = N_BF_POW/N_BEAM;
+		}else{
+			blk_size = N_BF_POW;
+		}
+		//int blk_plus_hdr_elem = hdr_size+blk_size;
+		//int blk_plus_hdr_bytes = hdr_size+(blk_size*sizeof(float));
+		//float * buff = (float *)calloc(blk_plus_hdr, sizeof(float));
+		//sz = read(fd, buff, blk_plus_hdr*sizeof(float));
+		//float * data_payload = (float *)(buff + hdr_size);
+		float * buff = (float *)calloc(blk_size, sizeof(float));
+		sz = read(fd, buff, blk_size*sizeof(float));
+		float * data_payload = (float *)(buff);
 
 		// Write data to text file for analysis
 		char output_filename[128];
 
-		//strcpy(output_filename, "C:\Users\ruzie\OneDrive\Desktop\Work\CUDA_code\output_d.txt");
-		strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test.txt");
+		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test.txt"); // cbf
+		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test1.txt"); // ics upchannelized
+		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test2.txt"); // ics no upchannelization
+		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test3.txt"); // cbf
+		strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test4.txt"); // sim-cbf
 
 		FILE* output_file;
 
 		output_file = fopen(output_filename, "w");
 
-		for (int ii = 0; ii < N_BF_POW; ii++) {
+		for (int ii = 0; ii < blk_size; ii++) {
 			//fprintf(output_file, "%c\n", output_data[ii]);
 			fprintf(output_file, "%g\n", data_payload[ii]);
 		}

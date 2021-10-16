@@ -125,6 +125,11 @@ void init_beamformer() {
 	return;
 }
 
+// Set arrays to zero after a block is processed
+void set_to_zero(){
+	checkCuda(cudaMemset(d_data_float, 0, (N_INPUT) * sizeof(float)));
+}
+
 // Perform transpose on the data and convert to floats
 __global__
 void data_transpose(signed char* data_in, cuComplex* data_tra, int offset) {
@@ -574,7 +579,7 @@ float* simulate_coefficients() {
 	sim_flag = 2 -> Scale each beam by incrementing value in a particular bin (bin 3 and 6 for now). Match simulated data sim_flag = 2
 	sim flag = 3 -> Simulated beams from 58 to 122 degrees. Assuming a ULA.
 	*/
-	int sim_flag = 1;
+	int sim_flag = 0;
 	if (sim_flag == 0) {
 		for (int i = 0; i < (N_COEFF / 2); i++) {
 			coeff_sim[2 * i] = 1;
