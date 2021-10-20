@@ -101,7 +101,10 @@ int main(int argc, char * argv[])
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test3.txt"); // cbf
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test4.txt"); // sim-cbf
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test5.txt"); // cbf-after simulated data was correct
-		strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test6.txt"); // ics no upchannelization -after simulated data was correct
+		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test6.txt"); // ics no upchannelization -after simulated data was correct
+		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test7.txt"); // cbf - RAW FILE input
+		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test8.txt"); // ics upchannelization - RAW FILE input
+		strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test9.txt"); // sim-cbf - Working moving SOI simulated
 
 		FILE* output_file;
 

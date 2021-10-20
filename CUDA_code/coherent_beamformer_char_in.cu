@@ -135,15 +135,20 @@ __global__
 void data_transpose(signed char* data_in, cuComplex* data_tra, int offset) {
 	int a = threadIdx.x; // Antenna index
 	int p = threadIdx.y; // Polarization index
-	int f = blockIdx.x;  // Frequency index
-	int t = blockIdx.y;  // Time sample index
+	int f = blockIdx.y;  // Frequency index
+	int t = blockIdx.x;  // Time sample index
 
 	// If the input data is not float e.g. signed char, just multiply it by '1.0f' to convert it to a float
 	if(f < N_FREQ_STREAM){
 		int h_in = data_in_idx(a, p, (f + offset), t);
 		int h_tr = data_tr_idx(a, p, (f + offset), t);
+		//if(a < N_REAL_ANT){
 		data_tra[h_tr].x = data_in[2*h_in]*1.0f;
 		data_tra[h_tr].y = data_in[2*h_in + 1]*1.0f;
+		//}else{
+		//	data_tra[h_tr].x = 0*1.0f;
+		//	data_tra[h_tr].y = 0*1.0f;
+		//}
 	}
 
 	return;
@@ -191,8 +196,8 @@ void coherent_beamformer(cuComplex* input_data, float* coeff, float* output_data
 	}
 	*/
 	int a = threadIdx.x; // Antenna index
-	int f = blockIdx.x;  // Frequency index
-	int t = blockIdx.y;  // Time sample index
+	int f = blockIdx.y;  // Frequency index
+	int t = blockIdx.x;  // Time sample index
 	int b = blockIdx.z;  // Beam index
 
 	__shared__ cuFloatComplex reduced_mul[N_ANT];
@@ -241,8 +246,8 @@ void coherent_beamformer(cuComplex* input_data, float* coeff, float* output_data
 __global__
 void beamformer_power(float* bf_volt, float* bf_power, int offset) {
 	int b = threadIdx.x; // Beam index
-	int f = blockIdx.x;  // Frequency bin index
-	int t = blockIdx.y;  // Time sample index
+	int f = blockIdx.y;  // Frequency bin index
+	int t = blockIdx.x;  // Time sample index
 
 	if(f < N_FREQ_STREAM){	
 		// Power = Absolute value squared of output -> r^2 + i^2
@@ -334,7 +339,8 @@ float* run_beamformer(signed char* data_in, float* h_coefficient) {
 
 	// Transpose kernel: Specify grid and block dimensions
 	dim3 dimBlock_transpose(N_ANT, N_POL, 1);
-	dim3 dimGrid_transpose(N_FREQ, N_TIME, 1);
+	dim3 dimGrid_transpose(N_TIME, N_FREQ, 1);
+	//dim3 dimGrid_transpose(N_FREQ, N_TIME, 1);
 
 	// Beamformer coefficient kernel (float to complex): Specify grid and block dimensions
 	//dim3 dimBlock_bf_coeff(N_ANT, N_POL, 1);
@@ -343,11 +349,11 @@ float* run_beamformer(signed char* data_in, float* h_coefficient) {
 	// Coherent beamformer kernel: Specify grid and block dimensions
 	//dim3 dimBlock_coh_bf(N_ANT, N_POL, 1);
 	dim3 dimBlock_coh_bf(N_ANT, 1, 1);
-	dim3 dimGrid_coh_bf(N_FREQ, N_TIME, N_BEAM);
+	dim3 dimGrid_coh_bf(N_TIME, N_FREQ, N_BEAM);
 
 	// Output power of beamformer kernel: Specify grid and block dimensions
 	dim3 dimBlock_bf_pow(N_BEAM, 1, 1);
-	dim3 dimGrid_bf_pow(N_FREQ, N_TIME, 1);
+	dim3 dimGrid_bf_pow(N_TIME, N_FREQ, 1);
 
 	float* d_data_bf = d_data_float;
 	signed char* d_data_in = d_data_char;
@@ -488,10 +494,14 @@ signed char* simulate_data() {
 	sim_flag = 2 -> Sequence of 1 to 64 placed in a particular bin (bin 6 for now)
 	sim flag = 3 -> Simulated radio source in center beam assuming ULA
 	*/
-	int sim_flag = 1;
+	int sim_flag = 3;
 	if (sim_flag == 0) {
 		for (int i = 0; i < (N_INPUT / 2); i++) {
-			data_sim[2 * i] = 1;
+			if(i < (N_REAL_INPUT/2)){
+				data_sim[2 * i] = 1;
+			}else{
+				data_sim[2 * i] = 0;
+			}
 		}
 	}
 	if (sim_flag == 1) {
@@ -504,7 +514,11 @@ signed char* simulate_data() {
 							tmp = 0;
 						}
 						tmp = (tmp + 1) % (N_ANT+1);
-						data_sim[2 * data_in_idx(a, p, f, t)] = tmp;
+						if(a < N_REAL_ANT){
+							data_sim[2 * data_in_idx(a, p, f, t)] = tmp;
+						}else{
+							data_sim[2 * data_in_idx(a, p, f, t)] = 0;
+						}
 					}
 				}
 			}
@@ -519,8 +533,13 @@ signed char* simulate_data() {
 						tmp = 0;
 					}
 					tmp = (tmp + 1) % (N_ANT+1);
-					data_sim[2 * data_in_idx(a, p, 5, t)] = tmp;
-					data_sim[2 * data_in_idx(a, p, 2, t)] = tmp;
+					if(a < N_REAL_ANT){
+						data_sim[2 * data_in_idx(a, p, 5, t)] = tmp;
+						data_sim[2 * data_in_idx(a, p, 2, t)] = tmp;
+					}else{
+						data_sim[2 * data_in_idx(a, p, 5, t)] = 0;
+						data_sim[2 * data_in_idx(a, p, 2, t)] = 0;
+					}
 				}
 			}
 		}
@@ -540,22 +559,37 @@ signed char* simulate_data() {
 		//float* theta = (float*)calloc(N_TIME, sizeof(float)); // SOI direction/angle of arrival
 		//float* tau = (float*)calloc(N_TIME, sizeof(float)); // Delay
 
-		float theta = 0; // SOI direction/angle of arrival
-		float tau = 0; // Delay
-		float rf_freqs = 0;
+		double theta = 0; // SOI direction/angle of arrival
+		double tau = 0; // Delay
+		double rf_freqs = 0;
+		double cb = 90; // Center beam in degrees
+
+		float tmp_max = 1.0;
+		float tmp_min = -1.0;
 
 		for (int t = 0; t < N_TIME; t++) {
-			theta = (t - (N_TIME / 2)) + 90; // SOI direction/angle of arrival -> Moving across array over time i.e. angle changes each time sample
+			// Reduce the range of angles in order to prevent wrap around - That's what the 100 and 200 are for.
+			theta = ((t/100 - (N_TIME / 200)) + cb)*PI/180; // SOI direction/angle of arrival -> Moving across array over time i.e. angle changes each time sample
 			tau = d * cos(theta) / c; // Delay
 			for (int f = 0; f < N_FREQ; f++) {
 				rf_freqs = chan_band * f + c_freq;
 				for (int a = 0; a < N_ANT; a++) {
-					// X polarization
-					data_sim[2 * data_in_idx(a, 0, f, t)] = cos(2 * PI * rf_freqs * a * tau);
-					data_sim[2 * data_in_idx(a, 0, f, t) + 1] = sin(2 * PI * rf_freqs * a * tau);
-					// Y polarization
-					data_sim[2 * data_in_idx(a, 1, f, t)] = cos(2 * PI * rf_freqs * a * tau);
-					data_sim[2 * data_in_idx(a, 1, f, t) + 1] = sin(2 * PI * rf_freqs * a * tau); // Make this negative if a different polarization is tested
+					if(a < N_REAL_ANT){
+						// Requantize from doubles/floats to signed chars with a range from -128 to 127
+						// X polarization
+						data_sim[2 * data_in_idx(a, 0, f, t)] = (signed char)((((cos(2 * PI * rf_freqs * a * tau) - tmp_min)/(tmp_max-tmp_min)) - 0.5)*256);
+						data_sim[2 * data_in_idx(a, 0, f, t) + 1] = (signed char)((((sin(2 * PI * rf_freqs * a * tau) - tmp_min)/(tmp_max-tmp_min)) - 0.5)*256);
+						// Y polarization
+						data_sim[2 * data_in_idx(a, 1, f, t)] = (signed char)((((cos(2 * PI * rf_freqs * a * tau) - tmp_min)/(tmp_max-tmp_min)) - 0.5)*256);
+						data_sim[2 * data_in_idx(a, 1, f, t) + 1] = (signed char)((((sin(2 * PI * rf_freqs * a * tau) - tmp_min)/(tmp_max-tmp_min)) - 0.5)*256); // Make this negative if a different polarization is tested
+					}else{
+						// X polarization
+						data_sim[2 * data_in_idx(a, 0, f, t)] = 0;
+						data_sim[2 * data_in_idx(a, 0, f, t) + 1] = 0;
+						// Y polarization
+						data_sim[2 * data_in_idx(a, 1, f, t)] = 0;
+						data_sim[2 * data_in_idx(a, 1, f, t) + 1] = 0; // Make this negative if a different polarization is tested
+					}
 				}
 			}
 		}
@@ -579,7 +613,7 @@ float* simulate_coefficients() {
 	sim_flag = 2 -> Scale each beam by incrementing value in a particular bin (bin 3 and 6 for now). Match simulated data sim_flag = 2
 	sim flag = 3 -> Simulated beams from 58 to 122 degrees. Assuming a ULA.
 	*/
-	int sim_flag = 0;
+	int sim_flag = 3;
 	if (sim_flag == 0) {
 		for (int i = 0; i < (N_COEFF / 2); i++) {
 			coeff_sim[2 * i] = 1;
@@ -630,7 +664,7 @@ float* simulate_coefficients() {
 		float tau_beam = 0; // Delay
 
 		for (int b = 0; b < N_BEAM; b++) {
-			theta = (b - (N_BEAM / 2)) + 90; // Beam angle from 58 to 122 degrees - Given SOI at 90 deg or moving across array, the beam with the most power is beamm 33
+			theta = ((b - (N_BEAM / 2)) + 90)*PI/180; // Beam angle from 58 to 122 degrees - Given SOI at 90 deg or moving across array, the beam with the most power is beamm 33
 			tau_beam = d * cos(theta) / c; // Delay
 			for (int a = 0; a < N_ANT; a++) {
 				coeff_sim[2 * coeff_idx(a, b)] = cos(2 * PI * c_freq * a * tau_beam);
@@ -718,14 +752,10 @@ int main() {
 	// Allocate memory to all arrays used by run_beamformer() 
 	init_beamformer();
 
-
-	printf("Here1!\n");
 	// Generate simulated data
 	signed char* sim_data = simulate_data();
 	// Register the array in pinned memory to speed HtoD mem copy
 	input_data_pin(sim_data);
-
-	printf("Here2!\n");
 
 	// Generate simulated weights or coefficients
 	float* sim_coefficients = simulate_coefficients();
@@ -733,8 +763,11 @@ int main() {
 	// Register the array in pinned memory to speed HtoD mem copy
 	coeff_pin(sim_coefficients);
 
-	printf("Here4!\n");
+	printf("real sim_data: %d and imag sim_data: %d\n", sim_data[10485768], sim_data[10485769]);
+	//printf("real sim_coef: %f and imag sim_coef: %f\n", sim_coefficients[104], sim_coefficients[105]);
 
+	printf("real sim_data2: %d and imag sim_data2: %d\n", sim_data[8388616], sim_data[8388617]);
+	//printf("real sim_coef2: %f and imag sim_coef2: %f\n", sim_coefficients[106], sim_coefficients[107]);
 	// Allocate memory for output array
 	float* output_data;
 	//output_data = (float*)calloc(N_BF_POW, sizeof(float));

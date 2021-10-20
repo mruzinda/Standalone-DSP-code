@@ -116,8 +116,8 @@ __global__
 void data_transpose(float* data_in, cuComplex* data_tra) {
 	int a = threadIdx.x; // Antenna index
 	int p = threadIdx.y; // Polarization index
-	int f = blockIdx.x;  // Frequency index
-	int t = blockIdx.y;  // Time sample index
+	int f = blockIdx.y;  // Frequency index
+	int t = blockIdx.x;  // Time sample index
 
 	// If the input data is not float e.g. signed char, just multiply it by '1.0f' to convert it to a float
 	data_tra[data_tr_idx(a, p, f, t)].x = data_in[2*data_in_idx(a, p, f, t)];
@@ -168,8 +168,8 @@ void coherent_beamformer(cuComplex* input_data, float* coeff, float* output_data
 	}
 	*/
 	int a = threadIdx.x; // Antenna index
-	int f = blockIdx.x;  // Frequency index
-	int t = blockIdx.y;  // Time sample index
+	int f = blockIdx.y;  // Frequency index
+	int t = blockIdx.x;  // Time sample index
 	int b = blockIdx.z;  // Beam index
 
 	__shared__ cuFloatComplex reduced_mul[N_ANT];
@@ -215,8 +215,8 @@ void coherent_beamformer(cuComplex* input_data, float* coeff, float* output_data
 __global__
 void beamformer_power(float* bf_volt, float* bf_power) {
 	int b = threadIdx.x; // Beam index
-	int f = blockIdx.x;  // Frequency bin index
-	int t = blockIdx.y;  // Time sample index
+	int f = blockIdx.y;  // Frequency bin index
+	int t = blockIdx.x;  // Time sample index
 
 	// Power = Absolute value squared of output -> r^2 + i^2
 	int xp = coh_bf_idx(0, b, f, t); // X polarization
@@ -249,7 +249,7 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 
 	// Transpose kernel: Specify grid and block dimensions
 	dim3 dimBlock_transpose(N_ANT, N_POL, 1);
-	dim3 dimGrid_transpose(N_FREQ, N_TIME, 1);
+	dim3 dimGrid_transpose(N_TIME, N_FREQ, 1);
 
 	// Beamformer coefficient kernel (float to complex): Specify grid and block dimensions
 	//dim3 dimBlock_bf_coeff(N_ANT, N_POL, 1);
@@ -258,11 +258,11 @@ void run_beamformer(float* data_in, float* h_coefficient, float* data_out) {
 	// Coherent beamformer kernel: Specify grid and block dimensions
 	//dim3 dimBlock_coh_bf(N_ANT, N_POL, 1);
 	dim3 dimBlock_coh_bf(N_ANT, 1, 1);
-	dim3 dimGrid_coh_bf(N_FREQ, N_TIME, N_BEAM);
+	dim3 dimGrid_coh_bf(N_TIME, N_FREQ, N_BEAM);
 
 	// Output power of beamformer kernel: Specify grid and block dimensions
 	dim3 dimBlock_bf_pow(N_BEAM, 1, 1);
-	dim3 dimGrid_bf_pow(N_FREQ, N_TIME, 1);
+	dim3 dimGrid_bf_pow(N_TIME, N_FREQ, 1);
 
 	float* d_data_in = d_data_float;
 	cuComplex* d_data_tra = d_data_comp;
@@ -353,7 +353,7 @@ float* simulate_data() {
 	sim_flag = 2 -> Sequence of 1 to 64 placed in a particular bin (bin 6 for now)
 	sim flag = 3 -> Simulated radio source in center beam assuming ULA
 	*/
-	int sim_flag = 1;
+	int sim_flag = 3;
 	if (sim_flag == 0) {
 		for (int i = 0; i < (N_INPUT / 2); i++) {
 			data_sim[2 * i] = 1;
@@ -405,22 +405,22 @@ float* simulate_data() {
 		//float* theta = (float*)calloc(N_TIME, sizeof(float)); // SOI direction/angle of arrival
 		//float* tau = (float*)calloc(N_TIME, sizeof(float)); // Delay
 
-		float theta = 0; // SOI direction/angle of arrival
-		float tau = 0; // Delay
-		float rf_freqs = 0;
+		double theta = 0; // SOI direction/angle of arrival
+		double tau = 0; // Delay
+		double rf_freqs = 0;
 
 		for (int t = 0; t < N_TIME; t++) {
-			theta = (t - (N_TIME / 2)) + 90; // SOI direction/angle of arrival -> Moving across array over time i.e. angle changes each time sample
+			theta = ((t/100 - (N_TIME / 200)) + 90)*PI/180; // SOI direction/angle of arrival -> Moving across array over time i.e. angle changes each time sample
 			tau = d * cos(theta) / c; // Delay
 			for (int f = 0; f < N_FREQ; f++) {
 				rf_freqs = chan_band * f + c_freq;
 				for (int a = 0; a < N_ANT; a++) {
 					// X polarization
-					data_sim[2 * data_in_idx(a, 0, f, t)] = cos(2 * PI * rf_freqs * a * tau);
-					data_sim[2 * data_in_idx(a, 0, f, t) + 1] = sin(2 * PI * rf_freqs * a * tau);
+					data_sim[2 * data_in_idx(a, 0, f, t)] = (float)cos(2 * PI * rf_freqs * a * tau);
+					data_sim[2 * data_in_idx(a, 0, f, t) + 1] = (float)sin(2 * PI * rf_freqs * a * tau);
 					// Y polarization
-					data_sim[2 * data_in_idx(a, 1, f, t)] = cos(2 * PI * rf_freqs * a * tau);
-					data_sim[2 * data_in_idx(a, 1, f, t) + 1] = sin(2 * PI * rf_freqs * a * tau); // Make this negative if a different polarization is tested
+					data_sim[2 * data_in_idx(a, 1, f, t)] = (float)cos(2 * PI * rf_freqs * a * tau);
+					data_sim[2 * data_in_idx(a, 1, f, t) + 1] = (float)sin(2 * PI * rf_freqs * a * tau); // Make this negative if a different polarization is tested
 				}
 			}
 		}
@@ -444,7 +444,7 @@ float* simulate_coefficients() {
 	sim_flag = 2 -> Scale each beam by incrementing value in a particular bin (bin 3 and 6 for now). Match simulated data sim_flag = 2
 	sim flag = 3 -> Simulated beams from 58 to 122 degrees. Assuming a ULA.
 	*/
-	int sim_flag = 0;
+	int sim_flag = 3;
 	if (sim_flag == 0) {
 		for (int i = 0; i < (N_COEFF / 2); i++) {
 			coeff_sim[2 * i] = 1;
@@ -491,15 +491,15 @@ float* simulate_coefficients() {
 		//float* theta = (float*)calloc(N_TIME, sizeof(float)); // Beam angle from 58 to 122 degrees
 		//float* tau_beam = (float*)calloc(N_BEAM, sizeof(float)); // Delay
 
-		float theta = 0; // Beam angle from 58 to 122 degrees
-		float tau_beam = 0; // Delay
+		double theta = 0; // Beam angle from 58 to 122 degrees
+		double tau_beam = 0; // Delay
 
 		for (int b = 0; b < N_BEAM; b++) {
-			theta = (b - (N_BEAM / 2)) + 90; // Beam angle from 58 to 122 degrees - Given SOI at 90 deg or moving across array, the beam with the most power is beamm 33
+			theta = ((b - (N_BEAM / 2)) + 90)*PI/180; // Beam angle from 58 to 122 degrees - Given SOI at 90 deg or moving across array, the beam with the most power is beamm 33
 			tau_beam = d * cos(theta) / c; // Delay
 			for (int a = 0; a < N_ANT; a++) {
-				coeff_sim[2 * coeff_idx(a, b)] = cos(2 * PI * c_freq * a * tau_beam);
-				coeff_sim[2 * coeff_idx(a, b) + 1] = sin(2 * PI * c_freq * a * tau_beam);
+				coeff_sim[2 * coeff_idx(a, b)] = (float)cos(2 * PI * c_freq * a * tau_beam);
+				coeff_sim[2 * coeff_idx(a, b) + 1] = (float)sin(2 * PI * c_freq * a * tau_beam);
 			}
 		}
 	}

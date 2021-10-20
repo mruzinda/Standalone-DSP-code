@@ -33,20 +33,20 @@ for i in range(0,len(contents_tmp)-1):
 #N_time = 8
 
 # After processing .raw file and writing to filterbank file
-N_beam = 1
+#N_beam = 1
 N_bin = 32
 N_time = 16384
 
 # Reshape array to 3D -> Time X Bins X Beams
-contents_array = contents_float[0:(N_time*N_bin*N_beam)].reshape(N_time,N_bin,N_beam)
+contents_array = contents_float[0:(N_time*N_bin)].reshape(N_time,N_bin)
 
-beam_idx = 0 # beam index to plot
+#beam_idx = 0 # beam index to plot
 time_idx = 0 # time sample index to plot
 
 # Plot intensity map of frequency vs. time
 # "interpolation ='none'" removes interpolation which was there by default. 
 # I'm only removing it for the sake of accurate analysis and diagnosis.
-plt.imshow(contents_array[0:999,0:N_bin,beam_idx], extent=[1, N_bin, 1, 1000], interpolation='none')
+plt.imshow(contents_array[0:999,0:N_bin], extent=[1, N_bin, 1, 1000], interpolation='none')
 # Example plotting next window of time samples
 #plt.imshow(contents_array[1000:1999,0:N_bin,beam_idx], extent=[1, N_bin, 1, 1000], interpolation='none')
 #plt.imshow(contents_array[0:N_time,0:N_bin,beam_idx], extent=[1, N_bin, 1, N_time], interpolation='none')
@@ -59,7 +59,7 @@ plt.show()
 print("After waterfall plot")
 
 # Plot of power spectrum
-plt.plot(contents_array[time_idx,0:N_bin,beam_idx])
+plt.plot(contents_array[time_idx,0:N_bin])
 plt.title('Power spectrum at a time sample')
 plt.xlabel('Frequency bins')
 plt.ylabel('Power (arb.)')
