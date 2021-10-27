@@ -34,8 +34,8 @@ for i in range(0,len(contents_tmp)-1):
 
 # After processing .raw file and writing to filterbank file
 #N_beam = 1
-N_bin = 32
-N_time = 16384
+N_bin = 64 #32
+N_time = 8192 #16384
 
 # Reshape array to 3D -> Time X Bins X Beams
 contents_array = contents_float[0:(N_time*N_bin)].reshape(N_time,N_bin)
@@ -43,12 +43,19 @@ contents_array = contents_float[0:(N_time*N_bin)].reshape(N_time,N_bin)
 #beam_idx = 0 # beam index to plot
 time_idx = 0 # time sample index to plot
 
+# Upchannelization to compare with cbf output
+contents_fft = np.zeros(N_bin*N_time, dtype=complex)
+contents_fft2 = np.zeros((N_bin*N_time)-N_bin, dtype=complex) # (N_bin*N_time)-N_bin is the same as N_bin*(N_time-1)
+for i in range(0,N_bin):
+    contents_fft[i*N_time:(i+1)*N_time] = np.fft.fft(contents_array[:,i])
+    contents_fft2[i*(N_time-1):(i+1)*(N_time-1)] = contents_fft[((i*N_time)+1):(i+1)*N_time] 
+
 # Plot intensity map of frequency vs. time
 # "interpolation ='none'" removes interpolation which was there by default. 
 # I'm only removing it for the sake of accurate analysis and diagnosis.
-plt.imshow(contents_array[0:999,0:N_bin], extent=[1, N_bin, 1, 1000], interpolation='none')
+plt.imshow(contents_array[0:N_time,0:N_bin], extent=[1, N_bin, 1, N_time], aspect='auto', interpolation='none')
 # Example plotting next window of time samples
-#plt.imshow(contents_array[1000:1999,0:N_bin,beam_idx], extent=[1, N_bin, 1, 1000], interpolation='none')
+#plt.imshow(contents_array[0:1000,0:N_bin,beam_idx], extent=[1, N_bin, 1, 1000], interpolation='none')
 #plt.imshow(contents_array[0:N_time,0:N_bin,beam_idx], extent=[1, N_bin, 1, N_time], interpolation='none')
 #plt.imshow(contents_array[0:N_time,0:N_bin,beam_idx], extent=[1, N_bin, 1, N_time], interpolation='bicubic')
 plt.title('Intensity map (Frequency vs. time)')
@@ -66,6 +73,24 @@ plt.ylabel('Power (arb.)')
 plt.show()
 
 print("After power spectral plot")
+
+# Plot of upchannelized power spectrum
+plt.plot(abs(contents_fft2))
+plt.title('Upchannelized Power spectrum')
+plt.xlabel('Frequency bins')
+plt.ylabel('Power (arb.)')
+plt.show()
+
+print("After upchannelized power spectral plot")
+
+# Plot of upchannelized power spectrum
+plt.plot(10*np.log10(abs(contents_fft2)))
+plt.title('Upchannelized Power spectrum')
+plt.xlabel('Frequency bins')
+plt.ylabel('Power (dB)')
+plt.show()
+
+print("After upchannelized power spectral plot (dB)")
 
 #fig, axs = plt.subplots(1, 2)
 #fig.suptitle('Power spectra of individual beams')

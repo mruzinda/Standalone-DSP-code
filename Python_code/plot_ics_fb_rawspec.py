@@ -34,7 +34,7 @@ for i in range(0,len(contents_tmp)-1):
 
 # After processing .raw file and writing to filterbank file
 N_beam = 1
-N_bin = 32*16384
+N_bin = 64*8192 #32*16384
 #N_time = 16384
 
 # Reshape array to 3D -> Time X Bins X Beams
@@ -66,6 +66,15 @@ plt.ylabel('Power (arb.)')
 plt.show()
 
 print("After power spectral plot")
+
+# Plot of power spectrum
+plt.plot(10*np.log10(contents_float[0:(N_bin*N_beam)]))
+plt.title('Power spectrum at a time sample')
+plt.xlabel('Frequency bins')
+plt.ylabel('Power (dB)')
+plt.show()
+
+print("After power spectral plot (dB)")
 
 #fig, axs = plt.subplots(1, 2)
 #fig.suptitle('Power spectra of individual beams')

@@ -104,7 +104,9 @@ int main(int argc, char * argv[])
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test6.txt"); // ics no upchannelization -after simulated data was correct
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test7.txt"); // cbf - RAW FILE input
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test8.txt"); // ics upchannelization - RAW FILE input
-		strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test9.txt"); // sim-cbf - Working moving SOI simulated
+		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test9.txt"); // cbf - RAW file input after working moving SOI simulated
+		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test10.txt"); // cbf - RAW file input after changing read_fully() back
+		strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test11.txt"); // cbf - RAW file input after change from 32 to 64 coarse channs
 
 		FILE* output_file;
 
