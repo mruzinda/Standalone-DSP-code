@@ -46,11 +46,13 @@ time_idx = 0 # time sample index to plot
 # Upchannelizing data to compare with RAWSPEC.
 contents_fft = np.zeros(N_bin*N_time, dtype=complex)
 contents_fft2 = np.zeros((N_bin*N_time)-N_bin, dtype=complex) # (N_bin*N_time)-N_bin is the same as N_bin*(N_time-1)
+contents_avg = np.zeros(N_bin)
 window = np.hamming(N_time)
 for i in range(0,N_bin):
     #contents_fft[i*N_time:(i+1)*N_time] = np.fft.fft(np.multiply(contents_array[:,i,beam_idx], window))
     contents_fft[i*N_time:(i+1)*N_time] = np.fft.fft(contents_array[:,i,beam_idx])
     contents_fft2[i*(N_time-1):(i+1)*(N_time-1)] = contents_fft[((i*N_time)+1):(i+1)*N_time] 
+    contents_avg[i] = np.mean(contents_array[:,i,beam_idx])
 
 # Plot intensity map of frequency vs. time
 # "interpolation ='none'" removes interpolation which was there by default. 
@@ -75,6 +77,15 @@ plt.ylabel('Power (arb.)')
 plt.show()
 
 print("After power spectral plot")
+
+# Plot of power spectrum
+plt.plot(contents_avg)
+plt.title('Power spectrum average over time samples')
+plt.xlabel('Frequency bins')
+plt.ylabel('Power (arb.)')
+plt.show()
+
+print("After power spectral (time sample avg) plot")
 
 # Plot of upchannelized power spectrum
 plt.plot(abs(contents_fft2))

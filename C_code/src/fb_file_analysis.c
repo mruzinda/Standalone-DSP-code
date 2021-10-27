@@ -107,6 +107,7 @@ int main(int argc, char * argv[])
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test9.txt"); // cbf - RAW file input after working moving SOI simulated
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test10.txt"); // cbf - RAW file input after changing read_fully() back
 		strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test11.txt"); // cbf - RAW file input after change from 32 to 64 coarse channs
+		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test12.txt"); // sim-cbf - After change from 32 to 64 coarse channs
 
 		FILE* output_file;
 

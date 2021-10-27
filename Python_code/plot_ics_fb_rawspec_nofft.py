@@ -72,6 +72,15 @@ plt.xlabel('Frequency bins')
 plt.ylabel('Power (arb.)')
 plt.show()
 
+print("After upchannelized power spectral plot")
+
+# Plot of upchannelized power spectrum
+plt.plot(10*np.log10(abs(contents_array[time_idx,0:N_bin])))
+plt.title('Power spectrum at a time sample')
+plt.xlabel('Frequency bins')
+plt.ylabel('Power (dB)')
+plt.show()
+
 print("After power spectral plot")
 
 # Plot of upchannelized power spectrum

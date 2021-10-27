@@ -7,6 +7,7 @@
 #include "coherent_beamformer_char_in.h"
 
 // Used to investigate the simulated data a little further.
+// Compile with - gcc sim_data_test.c -o sim_data_test.exe -lm
 
 int main(){
 	signed char* data_sim;
