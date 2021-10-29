@@ -70,27 +70,15 @@ int main(int argc, char * argv[])
 
   	if(argc > 1) {
     		int fd  = open(argv[1],  O_RDONLY);
-    		ssize_t hdr_size = fb_fd_read_header(fd, &hdr, NULL);
-    		printf("header size %lu bytes\n", hdr_size);
-    		printf("fch1 %.17g\n", hdr.fch1);
-		printf("foff %.17g\n", hdr.foff);
-		printf("nbeams %d\n", hdr.nbeams);
-		int sz;
+		ssize_t sz = 1;
 		int ics_flag = 0; // Set to 1 if the incoherent sum processed the GUPPI RAW file
 		int blk_size = 0;
+		int count_blks = 0; // Used to count the number of blocks in filterbank file
 		if(ics_flag == 1){
 			blk_size = N_BF_POW/N_BEAM;
 		}else{
 			blk_size = N_BF_POW;
 		}
-		//int blk_plus_hdr_elem = hdr_size+blk_size;
-		//int blk_plus_hdr_bytes = hdr_size+(blk_size*sizeof(float));
-		//float * buff = (float *)calloc(blk_plus_hdr, sizeof(float));
-		//sz = read(fd, buff, blk_plus_hdr*sizeof(float));
-		//float * data_payload = (float *)(buff + hdr_size);
-		float * buff = (float *)calloc(blk_size, sizeof(float));
-		sz = read(fd, buff, blk_size*sizeof(float));
-		float * data_payload = (float *)(buff);
 
 		// Write data to text file for analysis
 		char output_filename[128];
@@ -106,20 +94,48 @@ int main(int argc, char * argv[])
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test8.txt"); // ics upchannelization - RAW FILE input
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test9.txt"); // cbf - RAW file input after working moving SOI simulated
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test10.txt"); // cbf - RAW file input after changing read_fully() back
-		strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test11.txt"); // cbf - RAW file input after change from 32 to 64 coarse channs
+		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test11.txt"); // cbf - RAW file input after change from 32 to 64 coarse channs
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test12.txt"); // sim-cbf - After change from 32 to 64 coarse channs
+		strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test13.txt"); // cbf - RAW file input after time averaging added to python post-proc
 
 		FILE* output_file;
 
-		output_file = fopen(output_filename, "w");
+		output_file = fopen(output_filename, "a"); // Append rather than overwrite file
 
-		for (int ii = 0; ii < blk_size; ii++) {
-			//fprintf(output_file, "%c\n", output_data[ii]);
-			fprintf(output_file, "%g\n", data_payload[ii]);
+		//int blk_plus_hdr_elem = hdr_size+blk_size;
+		//int blk_plus_hdr_bytes = hdr_size+(blk_size*sizeof(float));
+		//float * buff = (float *)calloc(blk_plus_hdr, sizeof(float));
+		//sz = read(fd, buff, blk_plus_hdr*sizeof(float));
+		//float * data_payload = (float *)(buff + hdr_size);
+		float * buff = (float *)calloc(blk_size, sizeof(float));
+		float * data_payload;
+		while(sz>0){
+			ssize_t hdr_size = fb_fd_read_header(fd, &hdr, NULL);
+    			printf("header size %lu bytes\n", hdr_size);
+    			printf("fch1 %.17g\n", hdr.fch1);
+			printf("foff %.17g\n", hdr.foff);
+			printf("nbeams %d\n", hdr.nbeams);
+			sz = read(fd, buff, blk_size*sizeof(float));
+			printf("Size of payload read from filterbank file in bytes: %zd \n", sz);
+			if(sz < (blk_size*sizeof(float))) {
+				printf("All bytes seem to have been read!\n");
+                		break;
+        		}
+
+			data_payload = (float *)(buff);
+
+			for (int ii = 0; ii < blk_size; ii++) {
+				//fprintf(output_file, "%c\n", output_data[ii]);
+				fprintf(output_file, "%g\n", data_payload[ii]);
+			}
+			memset(buff, 0, blk_size*sizeof(float)); // Set to zero after block is written to file (Probably not necessary)
+			count_blks += 1;
+			printf("Block index read and written: %d \n", count_blks);
 		}
+		printf("Number of blocks in the filter bank file = %d \n", count_blks);
 
 		fclose(output_file);
-
+		close(argv[1]);
 		printf("Closed output file.\n");
 
   	} else {

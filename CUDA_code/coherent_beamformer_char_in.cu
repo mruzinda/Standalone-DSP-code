@@ -569,7 +569,7 @@ signed char* simulate_data() {
 
 		for (int t = 0; t < N_TIME; t++) {
 			// Reduce the range of angles in order to prevent wrap around - That's what the 100 and 200 are for.
-			theta = ((t/100 - (N_TIME / 200)) + cb)*PI/180; // SOI direction/angle of arrival -> Moving across array over time i.e. angle changes each time sample
+			theta = ((t/50 - (N_TIME / 100)) + cb)*PI/180; // SOI direction/angle of arrival -> Moving across array over time i.e. angle changes each time sample
 			tau = d * cos(theta) / c; // Delay
 			for (int f = 0; f < N_FREQ; f++) {
 				rf_freqs = chan_band * f + c_freq;
