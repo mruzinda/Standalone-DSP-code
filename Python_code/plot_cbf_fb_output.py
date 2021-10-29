@@ -79,7 +79,7 @@ if N_blks > 1:
     # been averaged and advances in time are advances block index which in itself is a time window)
     # "interpolation ='none'" removes interpolation which was there by default. 
     # I'm only removing it for the sake of accurate analysis and diagnosis.
-    plt.imshow(contents_avg[0:N_blks,0:N_bin], extent=[1, N_blks, 1, N_bin], aspect='auto', interpolation='none')
+    plt.imshow(contents_avg[0:N_blks,0:N_bin], extent=[1, N_bin, 1, N_blks], aspect='auto', interpolation='none')
     plt.title('Intensity map (Frequency vs. time)')
     plt.ylabel('Time Windows')
     plt.xlabel('Frequency bins')
