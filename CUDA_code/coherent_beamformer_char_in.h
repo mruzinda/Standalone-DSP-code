@@ -44,7 +44,8 @@
 #define data_tr_idx(a, p, f, t)     (a + N_ANT*p + N_POL*N_ANT*f + N_FREQ*N_POL*N_ANT*t)
 #define coeff_idx(a, b)             (a + N_ANT*b)
 #define coh_bf_idx(p, b, f, t)      (p + N_POL*b + N_BEAM*N_POL*f + N_FREQ*N_BEAM*N_POL*t)
-#define pow_bf_idx(b, f, t)         (b + N_BEAM*f + N_FREQ*N_BEAM*t)
+//#define pow_bf_idx(b, f, t)         (b + N_BEAM*f + N_FREQ*N_BEAM*t)
+#define pow_bf_idx(b, f, t)         (f + N_FREQ*t + N_FREQ*N_TIME*b) // Changed to efficiently write each beam to a filterbank file
 
 /*
 // p - polarization index
