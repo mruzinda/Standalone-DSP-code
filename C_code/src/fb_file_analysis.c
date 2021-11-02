@@ -4,7 +4,7 @@
 // To run it:
 // ./fb_file_analysis.exe /datag/users/mruzinda/oics/guppi_59143_55142_000486_GPS-BIIR-11_0001-ics.rawspec.0000.fil
 // where the file in the argument is an example
-// Remember to change the ics_flag in the code to 1 if you are processing incoherent sum data.
+// Remember to change the sinlge_beam_flag in the code to 1 if you are processing incoherent sum data.
 // And change the filename of the text file if necessary.
 
 #include <stdio.h>
@@ -71,10 +71,10 @@ int main(int argc, char * argv[])
   	if(argc > 1) {
     		int fd  = open(argv[1],  O_RDONLY);
 		ssize_t sz = 1;
-		int ics_flag = 0; // Set to 1 if the incoherent sum processed the GUPPI RAW file
+		int sinlge_beam_flag = 1; // Set to 1 if the incoherent sum processed the GUPPI RAW file
 		int blk_size = 0;
 		int count_blks = 0; // Used to count the number of blocks in filterbank file
-		if(ics_flag == 1){
+		if(sinlge_beam_flag == 1){
 			blk_size = N_BF_POW/N_BEAM;
 		}else{
 			blk_size = N_BF_POW;
@@ -96,7 +96,9 @@ int main(int argc, char * argv[])
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test10.txt"); // cbf - RAW file input after changing read_fully() back
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test11.txt"); // cbf - RAW file input after change from 32 to 64 coarse channs
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test12.txt"); // sim-cbf - After change from 32 to 64 coarse channs
-		strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test13.txt"); // cbf - RAW file input after time averaging added to python post-proc
+		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test13.txt"); // cbf - RAW file input after time averaging added to python post-proc
+		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test14.txt"); // cbf - RAW file input after time averaging added to python post-proc
+		strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test15.txt"); // cbf - RAW FILE input - Only one beam per file (so same structure as rawspec)
 
 		FILE* output_file;
 
@@ -109,12 +111,23 @@ int main(int argc, char * argv[])
 		//float * data_payload = (float *)(buff + hdr_size);
 		float * buff = (float *)calloc(blk_size, sizeof(float));
 		float * data_payload;
+		ssize_t hdr_size;
 		while(sz>0){
-			ssize_t hdr_size = fb_fd_read_header(fd, &hdr, NULL);
-    			printf("header size %lu bytes\n", hdr_size);
-    			printf("fch1 %.17g\n", hdr.fch1);
-			printf("foff %.17g\n", hdr.foff);
-			printf("nbeams %d\n", hdr.nbeams);
+			if(sinlge_beam_flag == 1 && count_blks == 0){
+				hdr_size = fb_fd_read_header(fd, &hdr, NULL);
+				printf("header size %lu bytes\n", hdr_size);
+    				printf("fch1 %.17g\n", hdr.fch1);
+				printf("foff %.17g\n", hdr.foff);
+				printf("nbeams %d\n", hdr.nbeams);
+			}
+			if(sinlge_beam_flag == 0){ // Currently, coherent beamformer 
+				hdr_size = fb_fd_read_header(fd, &hdr, NULL);
+				printf("header size %lu bytes\n", hdr_size);
+    				printf("fch1 %.17g\n", hdr.fch1);
+				printf("foff %.17g\n", hdr.foff);
+				printf("nbeams %d\n", hdr.nbeams);
+			}
+    			
 			sz = read(fd, buff, blk_size*sizeof(float));
 			printf("Size of payload read from filterbank file in bytes: %zd \n", sz);
 			if(sz < (blk_size*sizeof(float))) {
@@ -135,7 +148,7 @@ int main(int argc, char * argv[])
 		printf("Number of blocks in the filter bank file = %d \n", count_blks);
 
 		fclose(output_file);
-		close(argv[1]);
+		//close(argv[1]);
 		printf("Closed output file.\n");
 
   	} else {

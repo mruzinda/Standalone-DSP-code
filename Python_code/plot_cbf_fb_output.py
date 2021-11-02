@@ -15,11 +15,17 @@ txt_filename = sys.argv[1]
 f = open(txt_filename, 'r')
 #f = open("/datag/users/mruzinda/out_txt/output_d_test.txt", 'r')
 
+print("After open.")
+
 # Read file contents
 contents = f.read()
 
+print("After read.")
+
 # Split elements based on new line i.e. '\n'
 contents_tmp = contents.split('\n')
+
+print("After split.")
 
 # Convert contents from string to float
 contents_float = np.zeros(len(contents_tmp))
@@ -85,7 +91,7 @@ if N_blks > 1:
     plt.xlabel('Frequency bins')
     plt.show()
 
-    plt.imshow(10*np.log10(contents_avg[0:N_blks,0:N_bin]), extent=[1, N_blks, 1, N_bin], aspect='auto', interpolation='none')
+    plt.imshow(10*np.log10(contents_avg[0:N_blks,0:N_bin]), extent=[1, N_bin, 1, N_blks], aspect='auto', interpolation='none')
     plt.title('Intensity map (Frequency vs. time)')
     plt.ylabel('Time Windows')
     plt.xlabel('Frequency bins')

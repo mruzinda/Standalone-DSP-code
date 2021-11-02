@@ -1,11 +1,8 @@
-// This script reads the filterbank files gets a block of data and writes it to a text file for further processing.
+// This script tests reading and writing blocks of data to and from both RAW and text files
 // To compile it:
-// gcc fb_file_analysis.c -o fb_file_analysis.exe -I/home/mruzinda/beamformer_workspace/include -L/home/mruzinda/beamformer_workspace/lib/ -lrawspec
+// gcc read_write_test.c -o rw_test.exe -lm
 // To run it:
-// ./fb_file_analysis.exe /datag/users/mruzinda/oics/guppi_59143_55142_000486_GPS-BIIR-11_0001-ics.rawspec.0000.fil
-// where the file in the argument is an example
-// Remember to change the ics_flag in the code to 1 if you are processing incoherent sum data.
-// And change the filename of the text file if necessary.
+// ./rw_test.exe
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,6 +40,14 @@ int main()
 		buff[i] = count;
 		printf("idx %d in buff val = %g\n",i, buff[i]);
 	}
+	
+	// Determining the size of an array
+	// The array must be initialized as it is below not with calloc() or malloc()
+	int buff_test[full_size];
+	int buff_size = sizeof(buff_test)/sizeof(float);
+	printf("sizeof(buff) = %lu \n", sizeof(buff_test));	
+	printf("sizeof(float) = %lu \n", sizeof(float));	
+	printf("Buffer size = %d \n", buff_size);
 
 	strcpy(raw_filename, "raw_test.bin"); 
 	strcpy(txt_filename, "txt_test.txt");

@@ -1,6 +1,6 @@
 # This script reshapes the one dimensional array from the beamformer and plots the response for analysis
 # Run with the following command:
-# python plot_cbf_fb_output.py <filename e.g. /datag/users/mruzinda/out_txt/output_d_test.txt>
+# python plot_ics_fb_rawspec.py <filename e.g. /datag/users/mruzinda/out_txt/output_d_test.txt>
 import matplotlib.pyplot as plt
 from array import array
 import numpy as np
