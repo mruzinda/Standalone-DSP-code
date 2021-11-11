@@ -1,4 +1,5 @@
 // This script tests reading and writing blocks of data to and from both RAW and text files
+// Also using this script to test python module importing.
 // To compile it:
 // gcc read_write_test.c -o rw_test.exe -lm
 // To run it:
