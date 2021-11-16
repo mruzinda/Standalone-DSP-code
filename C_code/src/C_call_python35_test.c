@@ -19,6 +19,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
+//#define SYSPATH L"/home/mruzinda/Standalone-DSP-code/C_code/src"
+#define SYSPATH L"/home/mruzinda/Standalone-DSP-code/Python_code"
 
 int main()
 {
@@ -26,6 +28,10 @@ int main()
 	// Initialize python the python interpreter //
 	Py_Initialize();
 
+	PySys_SetPath(SYSPATH);
+	//PyRun_SimpleString("import sys");   
+    	//PyRun_SimpleString("sys.path.append('./')");
+/*
 	// Set path to import module //
 	PyObject *sysmodule = PyImport_ImportModule("sys");
   	assert(sysmodule != NULL);
@@ -33,14 +39,18 @@ int main()
   	assert(syspath != NULL);
   	PyList_Append(syspath, PyUnicode_DecodeFSDefault("."));
 	//PyObject *syspath = PySys_GetObject("path");
-	//PyList_Append(syspath, PyUnicode_DecodeFSDefault("~/Standalone-DSP-code/C_code/src"));
+	//PyList_Append(syspath, PyUnicode_DecodeFSDefault("/home/mruzinda/Standalone-DSP-code/C_code/src"));
   	Py_DECREF(syspath);
   	Py_DECREF(sysmodule);
+*/
 
 	// Import python module //
-	PyObject* myModuleString = PyUnicode_DecodeFSDefault("func_for_C_script");
+	PyObject* myModuleString = PyUnicode_DecodeFSDefault("test_module");
+	//PyObject* myModuleString = PyUnicode_DecodeFSDefault("func_for_C_script");
+	//PyObject* myModuleString = PyUnicode_FromString("func_for_C_script");
 	assert(myModuleString != NULL);
 	PyObject* myModule = PyImport_Import(myModuleString);
+	//PyObject* myModule = PyImport_ImportModule("func_for_C_script");
 	assert(myModule != NULL);
 	Py_DECREF(myModuleString);
 	printf("Here1 \n");
@@ -51,10 +61,11 @@ int main()
 	Py_DECREF(myModule);
 
 	int arg = 1;
-	int arg_flag = 0.0; // This is the argument to change the flag in the python script //
+	//int arg_flag = 0.0; // This is the argument to change the flag in the python script //
 	// First argument is the size of the tuple (number of arguments).
 	// Second and onward arguments are the arguments to the __init__ function of the class.
-	PyObject* arglist = PyTuple_Pack(arg, PyFloat_FromDouble(arg_flag)); 
+	//PyObject* arglist = PyTuple_Pack(arg, PyFloat_FromDouble(arg_flag)); 
+	PyObject* arglist = PyTuple_Pack(arg, PyUnicode_DecodeFSDefault("1")); 
 	printf("Here3 \n");
 	assert(arglist != NULL);
 
@@ -101,6 +112,8 @@ int main()
 		result[i] = (float)PyFloat_AsDouble(result_tmp);
 		printf("idx %d in result array = %f \n", i, result[i]);
 	}
+
+	Py_Finalize();
 
 	return 0;
 }

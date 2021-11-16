@@ -81,12 +81,14 @@ int main()
   	assert(sysmodule != NULL);
   	PyObject *syspath = PyObject_GetAttrString(sysmodule, "path");
   	assert(syspath != NULL);
-  	PyList_Append(syspath, PyString_FromString("."));
+  	//PyList_Append(syspath, PyString_FromString("."));
+	PyList_Append(syspath, PyString_FromString("/home/mruzinda/Standalone-DSP-code/Python_code"));
   	Py_DECREF(syspath);
   	Py_DECREF(sysmodule);
 
 	// Import python module //
-	PyObject* myModuleString = PyString_FromString((char*)"func_for_C_script");
+	//PyObject* myModuleString = PyString_FromString((char*)"func_for_C_script");
+	PyObject* myModuleString = PyString_FromString((char*)"test_module");
 	assert(myModuleString != NULL);
 	PyObject* myModule = PyImport_Import(myModuleString);
 	assert(myModule != NULL);
@@ -97,10 +99,11 @@ int main()
 	Py_DECREF(myModule);
 
 	int arg = 1;
-	int arg_flag = 0.0; // This is the argument to change the flag in the python script //
+	//int arg_flag = 0.0; // This is the argument to change the flag in the python script //
 	// First argument is the size of the tuple (number of arguments).
 	// Second and onward arguments are the arguments to the __init__ function of the class.
-	PyObject* arglist = PyTuple_Pack(arg, PyFloat_FromDouble(arg_flag)); 
+	//PyObject* arglist = PyTuple_Pack(arg, PyFloat_FromDouble(arg_flag)); 
+	PyObject* arglist = PyTuple_Pack(arg, PyString_FromString((char*)"0")); 
 	assert(arglist != NULL);
 
 	// Get class //
