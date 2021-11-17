@@ -6,7 +6,7 @@
 // ./C_call_python35.exe
 // For python 3.7
 // To compile it:
-// gcc C_call_python35_test.c -o C_call_python35.exe -lm -I/opt/conda/include/python3.7m -L/opt/conda/lib -lpython3.7m
+// gcc C_call_python37_test.c -o C_call_python37.exe -lm -I/opt/conda/include/python3.7m -L/opt/conda/lib -lpython3.7m
 // And make sure that /opt/conda/lib is include in the LD_LIBRARY_PATH
 
 #define PY_SSIZE_T_CLEAN
@@ -32,10 +32,11 @@ int main()
 	// Initialize python the python interpreter //
 	Py_Initialize();
 
-	PySys_SetPath(SYSPATH);
+	//PySys_SetPath(SYSPATH);
 
 	// Import python module //
 	PyObject* myModuleString = PyUnicode_DecodeFSDefault("test_module");
+	//PyObject* myModuleString = PyUnicode_DecodeFSDefaultAndSize("test_module",11);
 	//PyObject* myModuleString = PyUnicode_DecodeFSDefault("func_for_C_script");
 	//PyObject* myModuleString = PyUnicode_FromString("func_for_C_script");
 	assert(myModuleString != NULL);
