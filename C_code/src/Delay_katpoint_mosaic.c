@@ -1,12 +1,10 @@
-// Using this script to test python module importing.
+// Using this script to test python module importing. Specifically, katpoint and mosaic modules for delay calculation.
+// Use python 3.7
 // To compile it:
-// gcc C_call_python35_test.c -o C_call_python35.exe -lm -I/usr/include/python3.5 -lpython3.5m
-// To run it:
-// ./C_call_python35.exe
-// For python 3.7
-// To compile it:
-// gcc C_call_python37_test.c -o C_call_python37.exe -lm -I/opt/conda/include/python3.7m -L/opt/conda/lib -lpython3.7m
+// gcc Delay_katpoint_mosaic.c -o Delay_katpoint_mosaic.exe -lm -I/opt/conda/include/python3.7m -L/opt/conda/lib -lpython3.7m
 // And make sure that /opt/conda/lib is include in the LD_LIBRARY_PATH
+// To run it:
+// ./Delay_katpoint_mosaic.exe
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
@@ -22,8 +20,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
-//#define SYSPATH L"/home/mruzinda/Standalone-DSP-code/C_code/src"
-#define SYSPATH L"/home/mruzinda/Standalone-DSP-code/Python_code"
 
 int main()
 {
@@ -32,7 +28,7 @@ int main()
 	Py_Initialize();
 
 	// Import python module //
-	PyObject* myModuleString = PyUnicode_DecodeFSDefault("test_module");
+	PyObject* myModuleString = PyUnicode_DecodeFSDefault("get_delays");
 	//PyObject* myModuleString = PyUnicode_DecodeFSDefaultAndSize("test_module",11);
 	//PyObject* myModuleString = PyUnicode_DecodeFSDefault("func_for_C_script");
 	//PyObject* myModuleString = PyUnicode_FromString("func_for_C_script");
@@ -44,16 +40,16 @@ int main()
 	Py_DECREF(myModuleString);
 	
 	// Get referrence to class //
-	PyObject* myClass = PyObject_GetAttrString(myModule, "Vals_to_generate");
+	PyObject* myClass = PyObject_GetAttrString(myModule, "DelayPolynomial");
 	assert(myClass != NULL);
 	Py_DECREF(myModule);
 
-	int arg = 1;
-	//int arg_flag = 0.0; // This is the argument to change the flag in the python script //
+	int arg = 0;
+	int arg_flag = 1.0; // This is the argument to change the flag in the python script //
 	// First argument is the size of the tuple (number of arguments).
 	// Second and onward arguments are the arguments to the __init__ function of the class.
-	//PyObject* arglist = PyTuple_Pack(arg, PyFloat_FromDouble(arg_flag)); 
-	PyObject* arglist = PyTuple_Pack(arg, PyUnicode_DecodeFSDefault("1")); 
+	PyObject* arglist = PyTuple_Pack(arg, PyFloat_FromDouble(arg_flag)); 
+	//PyObject* arglist = PyTuple_Pack(arg, PyUnicode_DecodeFSDefault("1")); 
 	assert(arglist != NULL);
 
 	// Get class //
@@ -61,13 +57,15 @@ int main()
 	assert(myInst != NULL);
 
 	// Get referrence to method/function //
-	PyObject* myMethod  = PyObject_GetAttrString(myInst, "gen_some_vals"); // fetch bound method //
+	PyObject* myMethod  = PyObject_GetAttrString(myInst, "get_delay_polynomials"); // fetch bound method //
   	assert(myMethod != NULL);
   	Py_DECREF(myInst);
 
-	int arg2 = 0;
+	int arg2 = 2;
+	int time_arg = 1629380016;
+	int dur_flag = 2;
 	// No argument needed for the gen_some_vals //
-	PyObject* arglist2 = PyTuple_Pack(arg2, PyFloat_FromDouble(1.0));
+	PyObject* arglist2 = PyTuple_Pack(arg2, PyFloat_FromDouble(time_arg), PyFloat_FromDouble(dur_flag));
 	assert(arglist2 != NULL);
 
 	// Get result from function //
@@ -93,8 +91,23 @@ int main()
 	for(int i = 0; i < arr_size; i++){
 		result_tmp = PyList_GetItem(myResult, i);
 		result[i] = (float)PyFloat_AsDouble(result_tmp);
-		printf("idx %d in result array = %f \n", i, result[i]);
 	}
+
+	// First beam
+	printf("--------------First beam---------------\n");
+	printf("idx %d in result array = %e \n", 0, result[0]);
+	printf("idx %d in result array = %e \n", 1, result[1]);
+	printf("idx %d in result array = %e \n", 2, result[2]);
+	// Second beam
+	printf("--------------Second beam--------------\n");
+	printf("idx %d in result array = %e \n", 64*2, result[64*2]);
+	printf("idx %d in result array = %e \n", (64*2)+2, result[(64*2)+2]);
+	printf("idx %d in result array = %e \n", (64*2)+(2*2), result[(64*2)+(2*2)]);
+	// Second beam next delay
+	printf("--------Second beam next delay?--------\n");
+	printf("idx %d in result array = %e \n", (64*2)+1, result[(64*2)+1]);
+	printf("idx %d in result array = %e \n", (64*2)+2+1, result[(64*2)+2+1]);
+	printf("idx %d in result array = %e \n", (64*2)+(2*2)+1, result[(64*2)+(2*2)+1]);
 
 	Py_Finalize();
 
