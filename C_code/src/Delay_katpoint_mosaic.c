@@ -44,11 +44,11 @@ int main()
 	assert(myClass != NULL);
 	Py_DECREF(myModule);
 
-	int arg = 0;
-	int arg_flag = 1.0; // This is the argument to change the flag in the python script //
+	int arg = 1;
+	float freq_flag = 1.4e9; // This is the argument to change the flag in the python script //
 	// First argument is the size of the tuple (number of arguments).
 	// Second and onward arguments are the arguments to the __init__ function of the class.
-	PyObject* arglist = PyTuple_Pack(arg, PyFloat_FromDouble(arg_flag)); 
+	PyObject* arglist = PyTuple_Pack(arg, PyFloat_FromDouble(freq_flag)); 
 	//PyObject* arglist = PyTuple_Pack(arg, PyUnicode_DecodeFSDefault("1")); 
 	assert(arglist != NULL);
 
@@ -104,7 +104,7 @@ int main()
 	printf("idx %d in result array = %e \n", (64*2)+2, result[(64*2)+2]);
 	printf("idx %d in result array = %e \n", (64*2)+(2*2), result[(64*2)+(2*2)]);
 	// Second beam next delay
-	printf("--------Second beam next delay?--------\n");
+	printf("-----------Second beam rate------------\n");
 	printf("idx %d in result array = %e \n", (64*2)+1, result[(64*2)+1]);
 	printf("idx %d in result array = %e \n", (64*2)+2+1, result[(64*2)+2+1]);
 	printf("idx %d in result array = %e \n", (64*2)+(2*2)+1, result[(64*2)+(2*2)+1]);

@@ -20,7 +20,7 @@ class DelayPolynomial(object):
     reference -- the reference antenna for delay calculation
     """
     #def __init__(self, antennas, bore_sight, targets, reference):
-    def __init__(self):
+    def __init__(self, freq):
         """
         constructor of the Delay Polynomial class.
         
@@ -28,10 +28,10 @@ class DelayPolynomial(object):
         #A list of targets to observe
         targets = []
 
-        #ha=":".join(['1','25','46.5336'])
-        #dec=":".join(['-30','42','39.815999'])
-        ha=":".join(['1','2','3'])
-        dec=":".join(['-3','42','39.815999'])
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
         target_string=",".join(['radec',ha,dec])
         print(target_string)
         targets.append(katpoint.Target(target_string))
@@ -76,7 +76,7 @@ class DelayPolynomial(object):
         #self.antennas = antennas
         self.antennas = ants
         self.targets = DelayPolynomial.check_targets(targets)
-        self.frequency = 1.4e9
+        self.frequency = freq #1.4e9
         #self.reference = reference
         self.reference = arrayRef
         self.bore_sight = DelayPolynomial.check_targets([bore_sight,])[0]
@@ -191,23 +191,21 @@ def dict_to_antenna_ordered_list(dict_obj, antennas, pol='h'):
     return ordered_list
 
 # #provide a random time for now
-# test = DelayPolynomial()
+# freq_tmp = 1.4e9
+# test = DelayPolynomial(freq_tmp)
 # time = 1629380016
 # output = test.get_delay_polynomials(time,duration=2)
 
-# #beam, antenna, (delay, rate)
-# print(output.shape)
-
-# #First beam set to boresight, so all delay should be zero
+# First beam set to boresight, so all delay should be zero
 # #print(output[0,:,0])
-# print(output[0,0:63])
+#print(output[0:63])
 
 # #Second beam 
 # #print(output[1,0:3,0])
 # #print(output[1,0:3,1])
 # # The indices of the 1D arrays below match the ones commented above
-# print(output[0,[64*2,64*2+2,64*2+2*2]])
-# print(output[0,[(64*2)+1,(64*2)+2+1,(64*2)+(2*2)+1]])
+# print("[",output[64*2],output[64*2+2],output[64*2+2*2],"]")
+# print("[",output[(64*2)+1],output[(64*2)+2+1],output[(64*2)+(2*2)+1],"]")
 
 
 
