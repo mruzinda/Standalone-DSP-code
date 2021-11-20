@@ -28,6 +28,7 @@ class DelayPolynomial(object):
         #A list of targets to observe
         targets = []
 
+        # Beam idx 1
         ha=":".join(['1','25','46.5336'])
         dec=":".join(['-30','42','39.815999'])
         #ha=":".join(['1','2','3'])
@@ -36,23 +37,431 @@ class DelayPolynomial(object):
         print(target_string)
         targets.append(katpoint.Target(target_string))
 
+        # Beam idx 2
         ha=":".join(['1','26','0'])
         dec=":".join(['-30','43','0'])
         target_string=",".join(['radec',ha,dec])
         print(target_string)
         targets.append(katpoint.Target(target_string))
 
+        # Beam idx 3
         ha=":".join(['7','8','9'])
         dec=":".join(['-4','5','6'])
         target_string=",".join(['radec',ha,dec])
         print(target_string)
         targets.append(katpoint.Target(target_string))
 
+        # Beam idx 4
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 5
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 6
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 7
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 8
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 9
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 10
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 11
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 12
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 13
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 14
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 15
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 16
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 17
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 18
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 19
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 20
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        print(target_string)
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 21
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 22
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 23
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 24
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 25
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 26
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 27
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 28
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 29
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 30
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 31
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 32
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 33
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 34
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 35
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 36
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 37
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 38
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 39
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 40
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 41
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 42
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 43
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 44
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 45
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 46
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 47
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 48
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 49
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 50
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 51
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 52
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 53
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 54
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 55
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 56
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 57
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 58
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 59
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 60
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 61
+        ha=":".join(['1','25','46.5336'])
+        dec=":".join(['-30','42','39.815999'])
+        #ha=":".join(['1','2','3'])
+        #dec=":".join(['-3','42','39.815999'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 62
+        ha=":".join(['1','26','0'])
+        dec=":".join(['-30','43','0'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 63
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
+        # Beam idx 64
+        ha=":".join(['7','8','9'])
+        dec=":".join(['-4','5','6'])
+        target_string=",".join(['radec',ha,dec])
+        targets.append(katpoint.Target(target_string))
+
         #Default boresight is at ("1:25:46.5336", "-30:42:39.815999")
         ha=":".join(['1','25','46.5336'])
         dec=":".join(['-30','42','39.815999'])
         target_string=",".join(['radec',ha,dec])
-        print(target_string)
         #defaultBoreSight=katpoint.Target(target_string)
         bore_sight=katpoint.Target(target_string)
 

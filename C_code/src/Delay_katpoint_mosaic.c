@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <time.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <stdint.h>
 #include <endian.h>
@@ -23,6 +24,12 @@
 
 int main()
 {
+	float time_taken = 0;
+	float delaycalc_time = 0;
+
+	// Start timing delay calculation //
+	struct timespec tval_before, tval_after;
+	clock_gettime(CLOCK_MONOTONIC, &tval_before);
 
 	// Initialize python the python interpreter //
 	Py_Initialize();
@@ -92,6 +99,14 @@ int main()
 		result_tmp = PyList_GetItem(myResult, i);
 		result[i] = (float)PyFloat_AsDouble(result_tmp);
 	}
+
+	// Stop timing beamforming computation //
+	clock_gettime(CLOCK_MONOTONIC, &tval_after);
+	time_taken = (float)(tval_after.tv_sec - tval_before.tv_sec); //*1e6; // Time in seconds since epoch
+	time_taken = time_taken + (float)(tval_after.tv_nsec - tval_before.tv_nsec)*1e-9; // Time in nanoseconds since 'tv_sec - start and end'
+	delaycalc_time = time_taken;
+
+	printf("Delay calculation time: %f s\n", delaycalc_time);
 
 	// First beam
 	printf("--------------First beam---------------\n");
