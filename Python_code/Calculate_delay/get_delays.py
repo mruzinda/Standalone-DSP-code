@@ -34,21 +34,21 @@ class DelayPolynomial(object):
         #ha=":".join(['1','2','3'])
         #dec=":".join(['-3','42','39.815999'])
         target_string=",".join(['radec',ha,dec])
-        print(target_string)
+        #print(target_string)
         targets.append(katpoint.Target(target_string))
 
         # Beam idx 2
         ha=":".join(['1','26','0'])
         dec=":".join(['-30','43','0'])
         target_string=",".join(['radec',ha,dec])
-        print(target_string)
+        #print(target_string)
         targets.append(katpoint.Target(target_string))
 
         # Beam idx 3
         ha=":".join(['7','8','9'])
         dec=":".join(['-4','5','6'])
         target_string=",".join(['radec',ha,dec])
-        print(target_string)
+        #print(target_string)
         targets.append(katpoint.Target(target_string))
 
         # Beam idx 4
@@ -163,7 +163,6 @@ class DelayPolynomial(object):
         ha=":".join(['1','26','0'])
         dec=":".join(['-30','43','0'])
         target_string=",".join(['radec',ha,dec])
-        print(target_string)
         targets.append(katpoint.Target(target_string))
 
         # Beam idx 21
@@ -587,7 +586,7 @@ class DelayPolynomial(object):
         dim_3 = len(target_array[0,0,:])
         target_1d_tmp = target_array.reshape(1,dim_1*dim_2*dim_3)
         target_1d = target_1d_tmp.ravel().tolist()
-        print(target_1d[64*2+2*2])
+        #print(target_1d[64*2+2*2])
 
         return target_1d
 
