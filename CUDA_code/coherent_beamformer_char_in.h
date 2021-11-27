@@ -21,6 +21,8 @@
 #define N_REAL_INPUT  (unsigned long int)(2*N_POL*N_TIME*N_FREQ*N_REAL_ANT)       // Size of input. Currently, same size as output
 //#define N_COEFF  (unsigned long int)(2*N_ANT*N_POL*N_BEAM*N_FREQ)     // Size of beamformer coefficients
 #define N_COEFF       (unsigned long int)(2*N_ANT*N_BEAM)                    // Size of beamformer coefficients
+#define DELAY_POLYS   (unsigned long int)(2)                                 // Number of coefficients in polynomial
+#define N_DELAYS      (unsigned long int)(DELAY_POLYS*N_ANT*N_BEAM)          // Size of first order polynomial delay array
 #define N_OUTPUT      (unsigned long int)(2*N_POL*N_BEAM*N_FREQ*N_TIME)      // Size of beamformer output
 #define N_BF_POW      (unsigned long int)(N_BEAM*N_FREQ*N_TIME)              // Size of beamformer output after abs()^2
 //#define N_BF_POW N_POL_OUT*N_BEAM*N_FREQ*N_TIME    // Size of beamformer output after abs()^2
@@ -43,6 +45,7 @@
 // Don't need an "N_REAL_INPUT" macro since the antennas are initially the slowest moving index 
 #define data_tr_idx(a, p, f, t)     (a + N_ANT*p + N_POL*N_ANT*f + N_FREQ*N_POL*N_ANT*t)
 #define coeff_idx(a, b)             (a + N_ANT*b)
+#define delay_idx(d, a, b)          (d + DELAY_POLYS*a + DELAY_POLYS*N_ANT*b) // Should be correct indexing
 #define coh_bf_idx(p, b, f, t)      (p + N_POL*b + N_BEAM*N_POL*f + N_FREQ*N_BEAM*N_POL*t)
 //#define pow_bf_idx(b, f, t)         (b + N_BEAM*f + N_FREQ*N_BEAM*t)
 #define pow_bf_idx(b, f, t)         (f + N_FREQ*t + N_FREQ*N_TIME*b) // Changed to efficiently write each beam to a filterbank file
@@ -68,6 +71,7 @@ void init_beamformer(); // Allocate memory to all arrays
 void set_to_zero(); // Set arrays to zero after a block is processed
 signed char* simulate_data();
 float* simulate_coefficients();
+float* generate_coefficients(float* tau, float coarse_chan, float t);
 //void input_data_pin(float * data_in_pin);
 void input_data_pin(signed char * data_in_pin);
 void output_data_pin(float * data_out_pin);

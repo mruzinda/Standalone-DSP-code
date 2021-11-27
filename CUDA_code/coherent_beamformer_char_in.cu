@@ -6,7 +6,7 @@
 //#include <unistd.h>
 #include <cublas_v2.h>
 #include <time.h>
-//#include <sys/time.h>
+#include <sys/time.h>
 #include <iostream>
 #include <string.h>
 //#include <complex.h>
@@ -679,6 +679,25 @@ float* simulate_coefficients() {
 	return coeff_sim;
 }
 
+// Generate weights or coefficients with calculated delays (with delay polynomials (tau), coarse frequency channel (coarse_chan), and epoch (t))
+float* generate_coefficients(float* tau, float coarse_chan, float t) {
+	float* coefficients;
+	coefficients = (float*)calloc(N_COEFF, sizeof(float));
+	float delay_rate = 0;
+	float delay_offset = 0;
+
+	for (int b = 0; b < N_BEAM; b++) {
+		for (int a = 0; a < N_ANT; a++) {
+			delay_rate = tau[delay_idx(1,a,b)];
+			delay_offset = tau[delay_idx(0,a,b)];
+			coefficients[2 * coeff_idx(a, b)] = cos(2 * PI * coarse_chan * (t*delay_rate + delay_offset));
+			coefficients[2 * coeff_idx(a, b) + 1] = sin(2 * PI * coarse_chan * (t*delay_rate + delay_offset));
+		}
+	}
+
+	return coefficients;
+}
+
 // The input_data_pin() function uses cudaHostRegister() to allocate the input host
 // array in pinned memory.
 // This speeds up the cudaMemcpy() and enables implementation into HASHPIPE/RTOS.
@@ -743,7 +762,7 @@ void cohbfCleanup() {
 }
 
 //Comment out main() function when compiling for hpguppi
-/* // <----Uncomment here if testing standalone code
+/*// <----Uncomment here if testing standalone code
 // Test all of the kernels and functions, and write the output to
 // a text file for analysis
 int main() {
@@ -776,9 +795,29 @@ int main() {
 
 	printf("Here5!\n");
 
-	// Run beamformer 
-	output_data = run_beamformer(sim_data, sim_coefficients);
-	//run_beamformer(h_data, h_coeff, output_data);
+	float time_taken = 0;
+	float bf_time = 0;
+	int num_runs = 10;
+
+	// Start timing beamformer computation //
+	struct timespec tval_before, tval_after;
+
+	for(int ii = 0; ii < num_runs; ii++){
+		// Start timing beamformer computation //
+		clock_gettime(CLOCK_MONOTONIC, &tval_before);
+
+		// Run beamformer 
+		output_data = run_beamformer(sim_data, sim_coefficients);
+		//run_beamformer(h_data, h_coeff, output_data);
+
+		// Stop timing beamforming computation //
+		clock_gettime(CLOCK_MONOTONIC, &tval_after);
+		time_taken = (float)(tval_after.tv_sec - tval_before.tv_sec); //*1e6; // Time in seconds since epoch
+		time_taken = time_taken + (float)(tval_after.tv_nsec - tval_before.tv_nsec)*1e-9; // Time in nanoseconds since 'tv_sec - start and end'
+		bf_time += time_taken;
+		//printf("Time taken: %f s\n", time_taken);
+	}
+	printf("Average delay calculation time: %f s\n", bf_time/num_runs);
 
 	printf("Here6, Beamformer output: %f \n", output_data[0]);
 	
