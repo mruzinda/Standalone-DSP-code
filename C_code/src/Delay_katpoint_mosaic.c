@@ -75,10 +75,10 @@ int main()
 		Py_DECREF(myModule);
 
 		int arg = 1;
-		float freq_flag = 1.4e9; // This is the argument to change the flag in the python script //
+		float freq_chan = 1.4e9; // This is the argument to change the flag in the python script //
 		// First argument is the size of the tuple (number of arguments).
 		// Second and onward arguments are the arguments to the __init__ function of the class.
-		arglist = PyTuple_Pack(arg, PyFloat_FromDouble(freq_flag)); 
+		arglist = PyTuple_Pack(arg, PyFloat_FromDouble(freq_chan)); 
 		//PyObject* arglist = PyTuple_Pack(arg, PyUnicode_DecodeFSDefault("1")); 
 		assert(arglist != NULL);
 
@@ -133,17 +133,17 @@ int main()
 	printf("Average delay calculation time: %f s\n", delaycalc_time/num_runs);
 
 	// First beam
-	printf("--------------First beam---------------\n");
+	printf("--------------First beam delay offset---------------\n");
 	printf("idx %d in result array = %e \n", delay_idx(0, 0, 0), result[delay_idx(0, 0, 0)]);
 	printf("idx %d in result array = %e \n", delay_idx(0, 1, 0), result[delay_idx(1, 0, 0)]);
 	printf("idx %d in result array = %e \n", delay_idx(0, 2, 0), result[delay_idx(2, 0, 0)]);
 	// Second beam delay
-	printf("--------------Second beam--------------\n");
+	printf("--------------Second beam delay offset--------------\n");
 	printf("idx %d in result array = %e \n", delay_idx(0, 0, 1), result[delay_idx(0, 0, 1)]);
 	printf("idx %d in result array = %e \n", delay_idx(0, 1, 1), result[delay_idx(0, 1, 1)]);
 	printf("idx %d in result array = %e \n", delay_idx(0, 2, 1), result[delay_idx(0, 2, 1)]);
 	// Second beam rate
-	printf("-----------Second beam rate------------\n");
+	printf("---------------Second beam delay rate----------------\n");
 	printf("idx %d in result array = %e \n", delay_idx(1, 0, 1), result[delay_idx(1, 0, 1)]); // 129
 	printf("idx %d in result array = %e \n", delay_idx(1, 1, 1), result[delay_idx(1, 1, 1)]); // 131
 	printf("idx %d in result array = %e \n", delay_idx(1, 2, 1), result[delay_idx(1, 2, 1)]); // 133
