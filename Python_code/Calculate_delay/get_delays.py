@@ -616,12 +616,12 @@ try:
 except OSError as e:
     print("Failed to create FIFO: {0}" .format(e))
 else:
-    print("Here")
+    #print("Here")
     with open(path, 'w') as fifo:
-        print("Here1")
+        #print("Here1")
         for ele in output:
-            print("Here2")
-            fifo.write(str(ele))
+            #print("Here2")
+            fifo.write(str(ele)+"\n")
         fifo.close()
     #print("Here")
     #fifo = open(path, 'w')

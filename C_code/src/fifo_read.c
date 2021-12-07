@@ -9,7 +9,8 @@
 
 int main()
 {
-    int fd1;
+    //int fd1;
+    FILE *fd1;
 
     // FIFO file path
     char * myfifo = "/datag/users/mruzinda/katpoint_delays";
@@ -19,15 +20,24 @@ int main()
     mkfifo(myfifo, 0666);
 
     char str1[N_DELAYS];
-    while (1)
+    
+    fd1 = fopen(myfifo,"r");
+
+    int c = getc(fd1);
+    while(c != EOF)
     {
         // First open in read only and read
-        fd1 = open(myfifo,O_RDONLY);
-        read(fd1, str1, N_DELAYS);
+        //fd1 = open(myfifo,O_RDONLY);
+        //read(fd1, str1, N_DELAYS);
+	
+	fread(str1, N_DELAYS, 1, fd1);
 
         // Print the read string and close
         printf("User1: %s\n", &str1[0]);
-        close(fd1);
+        putchar(c);
+        c = getc(fd1);
+        
     }
+    fclose(fd1);
     return 0;
 }
