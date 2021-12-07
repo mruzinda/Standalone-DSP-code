@@ -1,5 +1,6 @@
 from katpoint import katpoint
 import coordinate as coord
+import os
 import sys
 import numpy as np
 from coordinate import Antenna
@@ -590,6 +591,8 @@ class DelayPolynomial(object):
 
         return target_1d
 
+    # Add method to return phase solutions from pickle file containing telstate phase solutions
+
 def dict_to_antenna_ordered_list(dict_obj, antennas, pol='h'):
     ordered_list = []
     for antenna in antennas:
@@ -598,11 +601,39 @@ def dict_to_antenna_ordered_list(dict_obj, antennas, pol='h'):
 
     return ordered_list
 
-# #provide a random time for now
-# freq_tmp = 1.4e9
-# test = DelayPolynomial(freq_tmp)
-# time = 1629380016
-# output = test.get_delay_polynomials(time,duration=2)
+#provide a random time for now
+freq_tmp = 1.4e9
+test = DelayPolynomial(freq_tmp)
+time = 1629380016
+output = test.get_delay_polynomials(time,duration=2)
+print("Length of output array: ", len(output))
+print(type(output[0]))
+
+# Path to be created
+path = "/datag/users/mruzinda/katpoint_delays"
+try:
+    os.mkfifo(path)
+except OSError as e:
+    print("Failed to create FIFO: {0}" .format(e))
+else:
+    print("Here")
+    with open(path, 'w') as fifo:
+        print("Here1")
+        for ele in output:
+            print("Here2")
+            fifo.write(str(ele))
+        fifo.close()
+    #print("Here")
+    #fifo = open(path, 'w')
+    #print("Here1")
+    #fifo.write(output)
+    #print("Here2")
+    #fifo.close()
+print("Path is created")
+
+
+
+
 
 # First beam set to boresight, so all delay should be zero
 # #print(output[0,:,0])
