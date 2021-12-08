@@ -5,6 +5,8 @@ import sys
 import numpy as np
 from coordinate import Antenna
 import csv
+import struct
+from array import array
 
 #sys.path.append('/home/mruzinda/Calculate_delay/katpoint/katpoint')
 
@@ -606,45 +608,50 @@ freq_tmp = 1.4e9
 test = DelayPolynomial(freq_tmp)
 time = 1629380016
 output = test.get_delay_polynomials(time,duration=2)
+
+#--------Simulated data for debugging-------#
+output_tmp = np.zeros(len(output))
+for i in range(0,8192):
+    output_tmp[i] = float(i*1e-11)
+
+output1 = output_tmp.ravel().tolist()
+#print("Length of output1 array: ", len(output1))
+#print(type(output1[0]))
+#print(" ")
+#print(output1[0:15])
+#print(output1[128])
+#------------------------------------------#
+
 print("Length of output array: ", len(output))
 print(type(output[0]))
 
 # Path to be created
-path = "/datag/users/mruzinda/katpoint_delays"
+path = "/tmp/katpoint_delays"
 try:
     os.mkfifo(path)
 except OSError as e:
     print("Failed to create FIFO: {0}" .format(e))
 else:
-    #print("Here")
-    with open(path, 'w') as fifo:
-        #print("Here1")
-        for ele in output:
-            #print("Here2")
-            fifo.write(str(ele)+"\n")
+    with open(path, 'wb') as fifo:
+#        output1.tofile(fifo)
+        fifo.write(struct.pack('f'*len(output), *output))
+#        for ele in output1:
+#            fifo.write(struct.pack('>f', ele))
+#            #fifo.write(ele)
         fifo.close()
-    #print("Here")
-    #fifo = open(path, 'w')
-    #print("Here1")
-    #fifo.write(output)
-    #print("Here2")
-    #fifo.close()
 print("Path is created")
-
-
-
 
 
 # First beam set to boresight, so all delay should be zero
 # #print(output[0,:,0])
-#print(output[0:63])
+print(output[0:63])
 
 # #Second beam 
 # #print(output[1,0:3,0])
 # #print(output[1,0:3,1])
 # # The indices of the 1D arrays below match the ones commented above
-# print("[",output[64*2],output[64*2+2],output[64*2+2*2],"]")
-# print("[",output[(64*2)+1],output[(64*2)+2+1],output[(64*2)+(2*2)+1],"]")
+print("[",output[64*2],output[64*2+2],output[64*2+2*2],"]")
+print("[",output[(64*2)+1],output[(64*2)+2+1],output[(64*2)+(2*2)+1],"]")
 
 
 
