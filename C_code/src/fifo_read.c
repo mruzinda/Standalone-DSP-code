@@ -1,4 +1,9 @@
 // C program to implement read from FIFO
+// In order to compile the script use the command:
+// gcc fifo_read.c -o fifo_read.exe
+// And run the script, enter:
+// ./fifo_read.exe
+// after the script used to write to the FIFO has been executed.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,10 +13,8 @@
 #include <unistd.h>
 #define N_DELAYS 8192
 #define N_ANT 64
-//#define N_BEAM 64
 #define DELAY_POLYS 2
 #define delay_idx(d, a, b)  (d + DELAY_POLYS*a + DELAY_POLYS*N_ANT*b) // Should be correct indexing
-//#define delay_idx(d, a, b)  (b + N_BEAM*a + N_BEAM*N_ANT*d) // Should be correct indexing
 
 int main()
 {
