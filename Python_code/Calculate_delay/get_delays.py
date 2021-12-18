@@ -8,6 +8,7 @@ import csv
 import struct
 from array import array
 import time
+from os.path import exists as file_exists
 
 #sys.path.append('/home/mruzinda/Calculate_delay/katpoint/katpoint')
 
@@ -606,14 +607,8 @@ def dict_to_antenna_ordered_list(dict_obj, antennas, pol='h'):
 
 # Compute delay polynomials and write to FIFO periodically
 while 1:
-    #provide a random time for now
-    freq_tmp = 1.4e9
-    test = DelayPolynomial(freq_tmp)
-    epoch_sec = 1629380016
-    output = test.get_delay_polynomials(epoch_sec,duration=2)
-
     #--------Simulated data for debugging-------#
-    output_tmp = np.zeros(len(output))
+    output_tmp = np.zeros(8192)
     for i in range(0,8192):
         output_tmp[i] = float(i*1e-11)
 
@@ -625,21 +620,58 @@ while 1:
     #print(output1[128])
     #------------------------------------------#
 
+    freq_tmp = 1.4e9
+    test = DelayPolynomial(freq_tmp)
+    epoch_sec = 1629380016 #provide a random time for now
+    path_r = "/tmp/epoch"
+    #exists_flag = file_exists(path_r)
+    print(path_r)
+    print(file_exists(path_r))
+    while file_exists(path_r) == False:
+        #print("In while file_exists == False")
+        if file_exists(path_r) == True:
+            print("In if file_exists == True")
+            print(path_r)
+            print(file_exists(path_r))
+            
+            with open(path_r, 'rb') as fifo1:
+                print("In with open(... rb) for fifo1")
+                #epoch_sec = fifo1.read()
+                epoch_tmp = struct.unpack('d', fifo1.read())
+                epoch_sec = epoch_tmp[0]
+                print("Epoch in seconds: ", epoch_sec)
+            os.unlink(path_r)
+            break
+
+    if file_exists(path_r) == True:
+        os.unlink(path_r)
+
+    print(path_r)
+    print(file_exists(path_r))
+    print("Epoch in seconds: ", epoch_sec)
+
+    output = test.get_delay_polynomials(epoch_sec,duration=2)
+
     print("Length of output array: ", len(output))
     print(type(output[0]))
 
     # Path to be created
     path = "/tmp/katpoint_delays"
+
+    if file_exists(path) == True:
+        os.unlink(path)
+        print("Deleted katpoint_delays FIFO")
+
     try:
         os.mkfifo(path)
     except OSError as e:
         print("Failed to create FIFO: {0}" .format(e))
     else:
         with open(path, 'wb') as fifo:
+            print("Before write to FIFO!")
             fifo.write(struct.pack('f'*len(output), *output))
             fifo.close()
-
-    print("Path is created")
+            print("Path is created")
 
     # Remove FIFO (remove file acting as FIFO)
     os.unlink(path)
@@ -657,5 +689,3 @@ while 1:
     print("[",output[64*2],output[64*2+2],output[64*2+2*2],"]")
     print("[",output[(64*2)+1],output[(64*2)+2+1],output[(64*2)+(2*2)+1],"]")
 
-    # Wait n seconds before computing new delays (n = 3 in this case)
-    time.sleep(3)
