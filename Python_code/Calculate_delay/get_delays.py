@@ -608,24 +608,32 @@ def dict_to_antenna_ordered_list(dict_obj, antennas, pol='h'):
 # Compute delay polynomials and write to FIFO periodically
 freq_tmp = 1.4e9
 epoch_sec = 1629380016 #provide a random time for now
+sim_flag = 0 # If sim_flag=1, then use simulated polynomials for testing
 # Path to be created
 path_r = "/tmp/epoch"
 path = "/tmp/katpoint_delays"
+# If either one of these FIFOs exists, delete the files on startup
+# os.unlink("pathtofile") -> Removes FIFO (remove file acting as FIFO)
+if file_exists(path_r) == True:
+    os.unlink(path_r)
+if file_exists(path) == True:
+    os.unlink(path)
+
 while 1:
     #--------Simulated data for debugging-------#
-    output_tmp = np.zeros(8192)
-    for i in range(0,8192):
-        output_tmp[i] = float(i*1e-11)
+    if sim_flag == 1:
+        output_tmp = np.zeros(8192)
+        for i in range(0,8192):
+            output_tmp[i] = float(i*1e-11)
 
-    output1 = output_tmp.ravel().tolist()
-    #print("Length of output1 array: ", len(output1))
-    #print(type(output1[0]))
-    #print(" ")
-    #print(output1[0:15])
-    #print(output1[128])
+        output1 = output_tmp.ravel().tolist()
+        #print("Length of output1 array: ", len(output1))
+        #print(type(output1[0]))
+        #print(" ")
+        #print(output1[0:15])
+        #print(output1[128])
     #------------------------------------------#
 
-    #exists_flag = file_exists(path_r)
     print(path_r)
     print(file_exists(path_r))
     while file_exists(path_r) == False:
@@ -637,7 +645,6 @@ while 1:
             
             with open(path_r, 'rb') as fifo1:
                 print("In with open(... rb) for fifo1")
-                #epoch_sec = fifo1.read()
                 epoch_tmp = struct.unpack('d', fifo1.read(8))
                 epoch_sec = epoch_tmp[0]
                 print("Epoch in seconds: ", epoch_sec)
