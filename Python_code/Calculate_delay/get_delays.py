@@ -610,14 +610,19 @@ freq_tmp = 1.4e9
 epoch_sec = 1629380016 #provide a random time for now
 sim_flag = 0 # If sim_flag=1, then use simulated polynomials for testing
 # Path to be created
-path_r = "/tmp/epoch"
+path_c = "/tmp/obsfreq"
+path_e = "/tmp/epoch"
 path = "/tmp/katpoint_delays"
 # If either one of these FIFOs exists, delete the files on startup
 # os.unlink("pathtofile") -> Removes FIFO (remove file acting as FIFO)
-if file_exists(path_r) == True:
-    os.unlink(path_r)
+if file_exists(path_c) == True:
+    os.unlink(path_c)
+if file_exists(path_e) == True:
+    os.unlink(path_e)
 if file_exists(path) == True:
     os.unlink(path)
+
+blk_count = 0
 
 while 1:
     #--------Simulated data for debugging-------#
@@ -634,31 +639,59 @@ while 1:
         #print(output1[128])
     #------------------------------------------#
 
-    print(path_r)
-    print(file_exists(path_r))
-    while file_exists(path_r) == False:
-        #print("In while file_exists == False")
-        if file_exists(path_r) == True:
-            print("In if file_exists == True")
-            print(path_r)
-            print(file_exists(path_r))
+    if blk_count == 0:
+        blk_count = blk_count+1
+        print(path_c)
+        print(file_exists(path_c))
+        while file_exists(path_c) == False:
+            #print("In while file_exists == False")
+            if file_exists(path_c) == True:
+                print("In if file_exists == True")
+                print(path_c)
+                print(file_exists(path_c))
             
-            with open(path_r, 'rb') as fifo1:
+                with open(path_c, 'rb') as fifoc:
+                    print("In with open(... rb) for fifoc")
+                    obsfreq_tmp = struct.unpack('d', fifoc.read(8))
+                    obsfreq = obsfreq_tmp[0]*1e6
+                    print("Center frequency (Hz): ", obsfreq)
+                os.unlink(path_c)
+                break
+            else:
+                continue
+
+        if file_exists(path_c) == True:
+            os.unlink(path_c)
+
+        print("Center frequency (Hz): ", obsfreq)
+
+    print(path_e)
+    print(file_exists(path_e))
+    while file_exists(path_e) == False:
+        #print("In while file_exists == False")
+        if file_exists(path_e) == True:
+            print("In if file_exists == True")
+            print(path_e)
+            print(file_exists(path_e))
+            
+            with open(path_e, 'rb') as fifo1:
                 print("In with open(... rb) for fifo1")
                 epoch_tmp = struct.unpack('d', fifo1.read(8))
                 epoch_sec = epoch_tmp[0]
                 print("Epoch in seconds: ", epoch_sec)
-            os.unlink(path_r)
+            os.unlink(path_e)
             break
+        else:
+            continue
 
-    if file_exists(path_r) == True:
-        os.unlink(path_r)
+    if file_exists(path_e) == True:
+        os.unlink(path_e)
 
-    print(path_r)
-    print(file_exists(path_r))
+    print(path_e)
+    print(file_exists(path_e))
     print("Epoch in seconds: ", epoch_sec)
 
-    test = DelayPolynomial(freq_tmp)
+    test = DelayPolynomial(obsfreq)
     output = test.get_delay_polynomials(epoch_sec,duration=2)
 
     print("Length of output array: ", len(output))
