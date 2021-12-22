@@ -22,7 +22,7 @@ for i in range(0,len(contents_tmp)-1):
 
 # Array dimensions
 N_beam = 64
-N_bin = 64
+N_bin = 512
 N_time = 8192
 
 # Reshape array to 3D -> Time X Bins X Beams

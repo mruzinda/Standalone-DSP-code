@@ -300,8 +300,8 @@ signed char* simulate_data() {
 	*/
 	int sim_flag = 3;
 	if (sim_flag == 0) {
-		for (int i = 0; i < (N_INPUT / 2); i++) {
-			if(i < (N_REAL_INPUT/2)){
+		for (int i = 0; i < ((N_INPUT/(MAX_COARSE_FREQ/N_COARSE_FREQ)) / 2); i++) {
+			if(i < ((N_REAL_INPUT/(MAX_COARSE_FREQ/N_COARSE_FREQ))/2)){
 				data_sim[2 * i] = 1;
 			}else{
 				data_sim[2 * i] = 0;
@@ -312,7 +312,7 @@ signed char* simulate_data() {
 		int tmp = 0;
 		for (int p = 0; p < N_POL; p++) {
 			for (int t = 0; t < N_TIME; t++) {
-				for (int f = 0; f < N_FREQ; f++) {
+				for (int f = 0; f < N_COARSE_FREQ; f++) {
 					for (int a = 0; a < N_ANT; a++) {
 						if (tmp >= N_ANT) {
 							tmp = 0;
@@ -366,7 +366,7 @@ signed char* simulate_data() {
 			// Reduce the range of angles in order to prevent wrap around - That's what the 100 and 200 are for.
 			theta = ((t/50 - (N_TIME / 100)) + cb)*PI/180; // SOI direction/angle of arrival -> Moving across array over time i.e. angle changes each time sample
 			tau = d * cos(theta) / c; // Delay
-			for (int f = 0; f < N_FREQ; f++) {
+			for (int f = 0; f < N_COARSE_FREQ; f++) {
 				rf_freqs = chan_band * f + c_freq;
 				for (int a = 0; a < N_ANT; a++) {
 					if(a < N_REAL_ANT){
@@ -406,7 +406,7 @@ float* simulate_coefficients() {
 	*/
 	int sim_flag = 3;
 	if (sim_flag == 0) {
-		for (int i = 0; i < (N_COEFF / 2); i++) {
+		for (int i = 0; i < ((N_COEFF/(MAX_COARSE_FREQ/N_COARSE_FREQ)) / 2); i++) {
 			coeff_sim[2 * i] = 1;
 		}
 	}
@@ -414,7 +414,7 @@ float* simulate_coefficients() {
 		int tmp = 0;
 		
                 for (int p = 0; p < N_POL; p++) {
-                	for (int f = 0; f < N_FREQ; f++) {
+                	for (int f = 0; f < N_COARSE_FREQ; f++) {
 				for (int a = 0; a < N_ANT; a++) {
 					for (int b = 0; b < N_BEAM; b++) {
 						if (tmp >= N_BEAM) {
@@ -432,7 +432,7 @@ float* simulate_coefficients() {
 	if (sim_flag == 2) {
 		int tmp = 0;
 		for (int p = 0; p < N_POL; p++) {
-                	for (int f = 0; f < N_FREQ; f++) {
+                	for (int f = 0; f < N_COARSE_FREQ; f++) {
 				for (int a = 0; a < N_ANT; a++) {
 					for (int b = 0; b < N_BEAM; b++) {
 						if (tmp >= N_BEAM) {
@@ -459,7 +459,7 @@ float* simulate_coefficients() {
 		float tau_beam = 0; // Delay
 
 
-		for (int f = 0; f < N_FREQ; f++) {
+		for (int f = 0; f < N_COARSE_FREQ; f++) {
 			rf_freqs = chan_band * f + c_freq;
 			for (int b = 0; b < N_BEAM; b++) {
 				theta = ((b - (N_BEAM / 2)) + 90)*PI/180; // Beam angle from 58 to 122 degrees - Given SOI at 90 deg or moving across array, the beam with the most power is beamm 33
@@ -489,7 +489,7 @@ float* generate_coefficients(float* tau, double* coarse_chan, float t) {
 	float delay_offset = 0;
 
 	for (int p = 0; p < N_POL; p++) {
-		for (int f = 0; f < N_FREQ; f++) {
+		for (int f = 0; f < N_COARSE_FREQ; f++) {
 			for (int b = 0; b < N_BEAM; b++) {
 				for (int a = 0; a < N_ANT; a++) {
 					delay_rate = tau[delay_idx(1,a,b)];
@@ -563,21 +563,33 @@ int main() {
 	// Allocate memory to all arrays used by run_beamformer() 
 	init_beamformer();
 
+        printf("After init_beamformer() \n");
+
 	// Generate simulated data
 	signed char* sim_data = simulate_data();
+
+        printf("After simulate_data() \n");
+
 	// Register the array in pinned memory to speed HtoD mem copy
 	input_data_pin(sim_data);
 
+	printf("After input_data_pin(sim_data); \n");
+
 	// Generate simulated weights or coefficients
 	float* sim_coefficients = simulate_coefficients();
+
+	printf("After simulate_coefficients(); \n");
+
 	//printf("Here3!\n");
 	// Register the array in pinned memory to speed HtoD mem copy
 	coeff_pin(sim_coefficients);
 
-	printf("real sim_data: %d and imag sim_data: %d\n", sim_data[10485768], sim_data[10485769]);
+	printf("After coeff_pin(sim_coefficients); \n");
+
+	//printf("real sim_data: %d and imag sim_data: %d\n", sim_data[10485768], sim_data[10485769]);
 	//printf("real sim_coef: %f and imag sim_coef: %f\n", sim_coefficients[104], sim_coefficients[105]);
 
-	printf("real sim_data2: %d and imag sim_data2: %d\n", sim_data[8388616], sim_data[8388617]);
+	//printf("real sim_data2: %d and imag sim_data2: %d\n", sim_data[8388616], sim_data[8388617]);
 	//printf("real sim_coef2: %f and imag sim_coef2: %f\n", sim_coefficients[106], sim_coefficients[107]);
 	// Allocate memory for output array
 	float* output_data;
