@@ -7,7 +7,7 @@
 #define N_POL 2 //2                     // Number of polarizations
 #define N_TIME 8192 //16384 //1 // 8                   // Number of time samples
 #define N_STREAMS 1                     // Number of CUDA streams
-#define N_COARSE_FREQ 64 //32               // Number of coarse channels processed at a time
+#define N_COARSE_FREQ 16 //32               // Number of coarse channels processed at a time
 #define MAX_COARSE_FREQ 512                 // Max number of coarse channels is the number of channels in 32k mode
 #define N_FINE_FREQ 1 //16384               // Number of fine channels per coarse channel 2^14 = 16384
 //#define N_FREQ (N_COARSE_FREQ*N_FINE_FREQ) // Number of frequency bins after second FFT.  Should actually be 2^14, but due to limited memory on my laptop, arbitrarily 10
@@ -42,29 +42,36 @@
 // f - frequency index
 // a - antenna index
 // b - beam index
-#define data_in_idx(a, p, f, t)     (p + N_POL*t + N_TIME*N_POL*f + N_COARSE_FREQ*N_TIME*N_POL*a)
+#define data_in_idx(p, t, f, a, Nf)     (p + N_POL*t + N_TIME*N_POL*f + Nf*N_TIME*N_POL*a)
 // Don't need an "N_REAL_INPUT" macro since the antennas are initially the slowest moving index 
-#define data_tr_idx(a, p, f, t)     (a + N_ANT*p + N_POL*N_ANT*f + N_COARSE_FREQ*N_POL*N_ANT*t)
-//#define coeff_idx(a, b)             (a + N_ANT*b)
-#define coeff_idx(a, p, b, f)       (a + N_ANT*p + N_POL*N_ANT*b + N_BEAM*N_POL*N_ANT*f)
-#define delay_idx(d, a, b)          (d + DELAY_POLYS*a + DELAY_POLYS*N_ANT*b) // Should be correct indexing
-#define coh_bf_idx(p, b, f, t)      (p + N_POL*b + N_BEAM*N_POL*f + N_COARSE_FREQ*N_BEAM*N_POL*t)
-#define pow_bf_idx(b, f, t)         (f + N_COARSE_FREQ*t + N_COARSE_FREQ*N_TIME*b) // Changed to efficiently write each beam to a filterbank file
+#define data_tr_idx(a, p, f, t, Nf)     (a + N_ANT*p + N_POL*N_ANT*f + Nf*N_POL*N_ANT*t)
+#define coeff_idx(a, p, b, f)           (a + N_ANT*p + N_POL*N_ANT*b + N_BEAM*N_POL*N_ANT*f)
+#define delay_idx(d, a, b)              (d + DELAY_POLYS*a + DELAY_POLYS*N_ANT*b) // Should be correct indexing
+#define coh_bf_idx(p, b, f, t, Nf)      (p + N_POL*b + N_BEAM*N_POL*f + Nf*N_BEAM*N_POL*t)
+#define pow_bf_idx(b, f, t, Nf)         (f + Nf*t + Nf*N_TIME*b) // Changed to efficiently write each beam to a filterbank file
+
+//#define data_in_idx(a, p, f, t)     (p + N_POL*t + N_TIME*N_POL*f + N_COARSE_FREQ*N_TIME*N_POL*a)
+// Don't need an "N_REAL_INPUT" macro since the antennas are initially the slowest moving index 
+//#define data_tr_idx(a, p, f, t)     (a + N_ANT*p + N_POL*N_ANT*f + N_COARSE_FREQ*N_POL*N_ANT*t)
+//#define coeff_idx(a, p, b, f)       (a + N_ANT*p + N_POL*N_ANT*b + N_BEAM*N_POL*N_ANT*f)
+//#define delay_idx(d, a, b)          (d + DELAY_POLYS*a + DELAY_POLYS*N_ANT*b) // Should be correct indexing
+//#define coh_bf_idx(p, b, f, t)      (p + N_POL*b + N_BEAM*N_POL*f + N_COARSE_FREQ*N_BEAM*N_POL*t)
+//#define pow_bf_idx(b, f, t)         (f + N_COARSE_FREQ*t + N_COARSE_FREQ*N_TIME*b) // Changed to efficiently write each beam to a filterbank file
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 void init_beamformer(); // Allocate memory to all arrays 
 void set_to_zero(); // Set arrays to zero after a block is processed
-signed char* simulate_data();
-float* simulate_coefficients();
-float* generate_coefficients(float* tau, double* coarse_chan, float t);
+signed char* simulate_data(int n_chan);
+float* simulate_coefficients(int n_chan);
+float* generate_coefficients(float* tau, double* coarse_chan, int n_chan, uint64_t n_real_ant, float t);
 void input_data_pin(signed char * data_in_pin);
 void output_data_pin(float * data_out_pin);
 void coeff_pin(float * data_coeff_pin);
 void unregister_data(void * data_unregister);
 void cohbfCleanup();
-float* run_beamformer(signed char* data_in, float* coefficient); // Run beamformer
+float* run_beamformer(signed char* data_in, float* coefficient, int n_chan); // Run beamformer
 #ifdef __cplusplus
 }
 #endif
