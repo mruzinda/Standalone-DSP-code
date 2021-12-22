@@ -5,8 +5,8 @@ import numpy as np
 
 # Open text file containing beamformer output
 #f = open("output_d_c.txt", 'r')
-# = open("output_d_cuda.txt", 'r')
-f = open("output_d_c_simple.txt", 'r')
+f = open("/home/mruzinda/beamformer_workspace/src/output_d_cuda.txt", 'r')
+#f = open("output_d_c_simple.txt", 'r')
 #f = open("output_d_cuda_simple.txt", 'r')
 
 # Read file contents
@@ -22,11 +22,11 @@ for i in range(0,len(contents_tmp)-1):
 
 # Array dimensions
 N_beam = 64
-N_bin = 10
-N_time = 8
+N_bin = 64
+N_time = 8192
 
 # Reshape array to 3D -> Time X Bins X Beams
-contents_array = contents_float[0:(N_time*N_bin*N_beam)].reshape(N_time,N_bin,N_beam)
+contents_array = contents_float[0:(N_time*N_bin*N_beam)].reshape(N_beam,N_time,N_bin)
 
 beam_idx = 0 # beam index to plot
 time_idx = 0 # time sample index to plot
@@ -34,15 +34,15 @@ time_idx = 0 # time sample index to plot
 # Plot intensity map of frequency vs. time
 # "interpolation ='none'" removes interpolation which was there by default. 
 # I'm only removing it for the sake of accurate analysis and diagnosis.
-plt.imshow(contents_array[0:N_time,0:N_bin,beam_idx], extent=[1, N_bin, 1, N_time], interpolation='none')
-#plt.imshow(contents_array[0:N_time,0:N_bin,beam_idx], extent=[1, N_bin, 1, N_time], interpolation='bicubic')
+#plt.imshow(contents_array[0:N_time,0:N_bin,beam_idx], extent=[1, N_bin, 1, N_time], aspect='auto', interpolation='bicubic')
+plt.imshow(contents_array[beam_idx,0:N_time,0:N_bin], extent=[1, N_bin, 1, N_time], aspect='auto', interpolation='none')
 plt.title('Intensity map (Frequency vs. time)')
 plt.ylabel('Time samples')
 plt.xlabel('Frequency bins')
 plt.show()
 
 # Plot of power spectrum
-plt.plot(contents_array[time_idx,0:N_bin,beam_idx])
+plt.plot(contents_array[beam_idx,time_idx,0:N_bin])
 plt.title('Power spectrum at a time sample')
 plt.xlabel('Frequency bins')
 plt.ylabel('Power (arb.)')
@@ -57,13 +57,13 @@ plt.show()
 
 fig, axs = plt.subplots(2, 2)
 fig.suptitle('Power spectra of individual beams')
-axs[0, 0].plot(contents_array[time_idx,0:N_bin,0])
+axs[0, 0].plot(contents_array[0,time_idx,0:N_bin])
 axs[0, 0].set_title('Beam 1')
-axs[0, 1].plot(contents_array[time_idx,0:N_bin,1], 'tab:orange')
+axs[0, 1].plot(contents_array[1,time_idx,0:N_bin], 'tab:orange')
 axs[0, 1].set_title('Beam 2')
-axs[1, 0].plot(contents_array[time_idx,0:N_bin,2], 'tab:green')
+axs[1, 0].plot(contents_array[2,time_idx,0:N_bin], 'tab:green')
 axs[1, 0].set_title('Beam 3')
-axs[1, 1].plot(contents_array[time_idx,0:N_bin,3], 'tab:red')
+axs[1, 1].plot(contents_array[3,time_idx,0:N_bin], 'tab:red')
 axs[1, 1].set_title('Beam 4')
 
 # set the spacing between subplots
@@ -84,7 +84,7 @@ plt.show()
 
 # Plot of power over time
 freq_idx = 5 # Frequency to plot
-plt.plot(contents_array[0:N_time,freq_idx,beam_idx])
+plt.plot(contents_array[beam_idx,0:N_time,freq_idx])
 plt.title('Power over time at a particular frequency')
 plt.xlabel('Time samples')
 plt.ylabel('Power (arb.)')
@@ -92,13 +92,13 @@ plt.show()
 
 fig, axs = plt.subplots(2, 2)
 fig.suptitle('Power over time of individual beams')
-axs[0, 0].plot(contents_array[0:N_time,freq_idx,0])
+axs[0, 0].plot(contents_array[0,0:N_time,freq_idx])
 axs[0, 0].set_title('Beam 1')
-axs[0, 1].plot(contents_array[0:N_time,freq_idx,1], 'tab:orange')
+axs[0, 1].plot(contents_array[1,0:N_time,freq_idx], 'tab:orange')
 axs[0, 1].set_title('Beam 2')
-axs[1, 0].plot(contents_array[0:N_time,freq_idx,2], 'tab:green')
+axs[1, 0].plot(contents_array[2,0:N_time,freq_idx], 'tab:green')
 axs[1, 0].set_title('Beam 3')
-axs[1, 1].plot(contents_array[0:N_time,freq_idx,33], 'tab:red')
+axs[1, 1].plot(contents_array[33,0:N_time,freq_idx], 'tab:red')
 axs[1, 1].set_title('Beam 33')
 
 # set the spacing between subplots

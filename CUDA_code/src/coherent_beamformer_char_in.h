@@ -45,7 +45,7 @@
 // Don't need an "N_REAL_INPUT" macro since the antennas are initially the slowest moving index 
 #define data_tr_idx(a, p, f, t)     (a + N_ANT*p + N_POL*N_ANT*f + N_FREQ*N_POL*N_ANT*t)
 //#define coeff_idx(a, b)             (a + N_ANT*b)
-#define coeff_idx(p, a, b, f)       (p + N_POL*a + N_ANT*N_POL*b + N_BEAM*N_ANT*N_POL*f)
+#define coeff_idx(a, p, b, f)       (a + N_ANT*p + N_POL*N_ANT*b + N_BEAM*N_POL*N_ANT*f)
 #define delay_idx(d, a, b)          (d + DELAY_POLYS*a + DELAY_POLYS*N_ANT*b) // Should be correct indexing
 #define coh_bf_idx(p, b, f, t)      (p + N_POL*b + N_BEAM*N_POL*f + N_FREQ*N_BEAM*N_POL*t)
 #define pow_bf_idx(b, f, t)         (f + N_FREQ*t + N_FREQ*N_TIME*b) // Changed to efficiently write each beam to a filterbank file

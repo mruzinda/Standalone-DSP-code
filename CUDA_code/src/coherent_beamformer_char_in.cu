@@ -117,7 +117,7 @@ void coherent_beamformer(cuComplex* input_data, float* coeff, float* output_data
 	
 			int i = data_tr_idx(a, p, (f + offset), t);
 			//int w = coeff_idx(a, b);
-                        int w = coeff_idx(p, a, b, f);
+                        int w = coeff_idx(a, p, b, f);
 
 			if (a < N_ANT) {
 				reduced_mul[a].x = input_data[i].x * coeff[2*w] + input_data[i].y * coeff[2*w + 1];
@@ -298,7 +298,7 @@ signed char* simulate_data() {
 	sim_flag = 2 -> Sequence of 1 to 64 placed in a particular bin (bin 6 for now)
 	sim flag = 3 -> Simulated radio source in center beam assuming ULA
 	*/
-	int sim_flag = 0;
+	int sim_flag = 3;
 	if (sim_flag == 0) {
 		for (int i = 0; i < (N_INPUT / 2); i++) {
 			if(i < (N_REAL_INPUT/2)){
@@ -404,7 +404,7 @@ float* simulate_coefficients() {
 	sim_flag = 2 -> Scale each beam by incrementing value in a particular bin (bin 3 and 6 for now). Match simulated data sim_flag = 2
 	sim flag = 3 -> Simulated beams from 58 to 122 degrees. Assuming a ULA.
 	*/
-	int sim_flag = 0;
+	int sim_flag = 3;
 	if (sim_flag == 0) {
 		for (int i = 0; i < (N_COEFF / 2); i++) {
 			coeff_sim[2 * i] = 1;
@@ -422,7 +422,7 @@ float* simulate_coefficients() {
 						}
 						tmp = (tmp + 1) % (N_BEAM + 1);
 						//coeff_sim[2 * coeff_idx(a, b)] = tmp;
-                                		coeff_sim[2 * coeff_idx(p, a, b, f)] = tmp;
+                                		coeff_sim[2 * coeff_idx(a, p, b, f)] = tmp;
 					}
 				}
                 	}
@@ -440,7 +440,7 @@ float* simulate_coefficients() {
 						}
 						tmp = (tmp + 1) % (N_BEAM + 1);
 						//coeff_sim[2 * coeff_idx(a, b)] = tmp;
-                                		coeff_sim[2 * coeff_idx(p, a, b, f)] = tmp;
+                                		coeff_sim[2 * coeff_idx(a, p, b, f)] = tmp;
 					}
 				}
                 	}
@@ -468,11 +468,11 @@ float* simulate_coefficients() {
 					//coeff_sim[2 * coeff_idx(a, b)] = cos(2 * PI * c_freq * a * tau_beam);
 					//coeff_sim[2 * coeff_idx(a, b) + 1] = sin(2 * PI * c_freq * a * tau_beam);
 					// X polarization
-					coeff_sim[2 * coeff_idx(0, a, b, f)] = cos(2 * PI * rf_freqs * a * tau_beam);
-					coeff_sim[2 * coeff_idx(0, a, b, f) + 1] = sin(2 * PI * rf_freqs * a * tau_beam);
+					coeff_sim[2 * coeff_idx(a, 0, b, f)] = cos(2 * PI * rf_freqs * a * tau_beam);
+					coeff_sim[2 * coeff_idx(a, 0, b, f) + 1] = sin(2 * PI * rf_freqs * a * tau_beam);
 					// Y polarization
-					coeff_sim[2 * coeff_idx(1, a, b, f)] = cos(2 * PI * rf_freqs * a * tau_beam);
-					coeff_sim[2 * coeff_idx(1, a, b, f) + 1] = sin(2 * PI * rf_freqs * a * tau_beam);
+					coeff_sim[2 * coeff_idx(a, 1, b, f)] = cos(2 * PI * rf_freqs * a * tau_beam);
+					coeff_sim[2 * coeff_idx(a, 1, b, f) + 1] = sin(2 * PI * rf_freqs * a * tau_beam);
 				}
 			}
 		}
@@ -496,8 +496,8 @@ float* generate_coefficients(float* tau, double* coarse_chan, float t) {
 					delay_offset = tau[delay_idx(0,a,b)];
 					//coefficients[2 * coeff_idx(a, b)] = cos(2 * PI * coarse_chan * (t*delay_rate + delay_offset));
 					//coefficients[2 * coeff_idx(a, b) + 1] = sin(2 * PI * coarse_chan * (t*delay_rate + delay_offset));
-					coefficients[2 * coeff_idx(p, a, b, f)] = cos(2 * PI * coarse_chan[f] * (t*delay_rate + delay_offset));
-					coefficients[2 * coeff_idx(p, a, b, f) + 1] = sin(2 * PI * coarse_chan[f] * (t*delay_rate + delay_offset));
+					coefficients[2 * coeff_idx(a, p, b, f)] = cos(2 * PI * coarse_chan[f] * (t*delay_rate + delay_offset));
+					coefficients[2 * coeff_idx(a, p, b, f) + 1] = sin(2 * PI * coarse_chan[f] * (t*delay_rate + delay_offset));
 				}
 			}
 		}
@@ -554,7 +554,7 @@ void cohbfCleanup() {
 }
 
 //Comment out main() function when compiling for hpguppi
-/*// <----Uncomment here if testing standalone code
+// <----Uncomment here if testing standalone code
 // Test all of the kernels and functions, and write the output to
 // a text file for analysis
 int main() {
@@ -609,7 +609,7 @@ int main() {
 		bf_time += time_taken;
 		//printf("Time taken: %f s\n", time_taken);
 	}
-	printf("Average delay calculation time: %f s\n", bf_time/num_runs);
+	printf("Average beamformer processing time: %f s\n", bf_time/num_runs);
 
 	printf("Here6, Beamformer output: %f \n", output_data[0]);
 	
@@ -660,4 +660,4 @@ int main() {
 
 	return 0;
 }
-*/ // <----Uncomment here if testing standalone code
+// <----Uncomment here if testing standalone code
