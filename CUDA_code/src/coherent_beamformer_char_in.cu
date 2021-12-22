@@ -199,7 +199,7 @@ float* run_beamformer(signed char* data_in, float* h_coefficient) {
 
 	//printf("Before cudaMemcpy(HtoD) coefficients! \n");
 	// Copy beamformer coefficients from host to device
-	checkCuda(cudaMemcpy(d_coefficient, h_coefficient, N_COEFF * sizeof(float), cudaMemcpyHostToDevice));
+	checkCuda(cudaMemcpy(d_coefficient, h_coefficient, N_COEFF/(MAX_COARSE_FREQ/N_COARSE_FREQ) * sizeof(float), cudaMemcpyHostToDevice));
 
 	// CUDA streams and events applied for optimization to possibly eliminate stalls.
 	// cudaMemcpy(HtoD) and data_restructure kernel	
@@ -643,7 +643,7 @@ int main() {
 
 	printf("Here10!\n");
 
-	for (int ii = 0; ii < N_BF_POW; ii++) {
+	for (int ii = 0; ii < N_BF_POW/(MAX_COARSE_FREQ/N_COARSE_FREQ); ii++) {
 		//fprintf(output_file, "%c\n", output_data[ii]);
 		fprintf(output_file, "%g\n", output_data[ii]);
 	}

@@ -12,8 +12,8 @@
 #define N_FINE_FREQ 1 //16384               // Number of fine channels per coarse channel 2^14 = 16384
 //#define N_FREQ (N_COARSE_FREQ*N_FINE_FREQ) // Number of frequency bins after second FFT.  Should actually be 2^14, but due to limited memory on my laptop, arbitrarily 10
 #define N_FREQ (MAX_COARSE_FREQ*N_FINE_FREQ) // Number of frequency bins after second FFT.  Should actually be 2^14, but due to limited memory on my laptop, arbitrarily 10
-#define N_FREQ_STREAM (N_FREQ/N_STREAMS) // (N_COARSE_FREQ*N_FINE_FREQ)/N_STREAMS // Number of frequency bins after second FFT.  Should actually be 2^14, but due to limited memory on my laptop, arbitrarily 10
-//#define N_FREQ_STREAM (N_COARSE_FREQ/N_STREAMS) // (N_COARSE_FREQ*N_FINE_FREQ)/N_STREAMS // Number of frequency bins after second FFT.  Should actually be 2^14, but due to limited memory on my laptop, arbitrarily 10
+//#define N_FREQ_STREAM (N_FREQ/N_STREAMS) // (N_COARSE_FREQ*N_FINE_FREQ)/N_STREAMS // Number of frequency bins after second FFT.  Should actually be 2^14, but due to limited memory on my laptop, arbitrarily 10
+#define N_FREQ_STREAM (N_COARSE_FREQ/N_STREAMS) // (N_COARSE_FREQ*N_FINE_FREQ)/N_STREAMS // Number of frequency bins after second FFT.  Should actually be 2^14, but due to limited memory on my laptop, arbitrarily 10
 #define N_ANT 64 // 64                  // Number of possible antennas (64 is also computationally efficient since it is a multiple of 32 which is the size of a warp)
 #define N_REAL_ANT 58                   // Number of antennas transmitting data downstream
 #define N_BEAM 64 // 64                 // Number of beams
@@ -42,14 +42,14 @@
 // f - frequency index
 // a - antenna index
 // b - beam index
-#define data_in_idx(a, p, f, t)     (p + N_POL*t + N_TIME*N_POL*f + N_FREQ*N_TIME*N_POL*a)
+#define data_in_idx(a, p, f, t)     (p + N_POL*t + N_TIME*N_POL*f + N_COARSE_FREQ*N_TIME*N_POL*a)
 // Don't need an "N_REAL_INPUT" macro since the antennas are initially the slowest moving index 
-#define data_tr_idx(a, p, f, t)     (a + N_ANT*p + N_POL*N_ANT*f + N_FREQ*N_POL*N_ANT*t)
+#define data_tr_idx(a, p, f, t)     (a + N_ANT*p + N_POL*N_ANT*f + N_COARSE_FREQ*N_POL*N_ANT*t)
 //#define coeff_idx(a, b)             (a + N_ANT*b)
 #define coeff_idx(a, p, b, f)       (a + N_ANT*p + N_POL*N_ANT*b + N_BEAM*N_POL*N_ANT*f)
 #define delay_idx(d, a, b)          (d + DELAY_POLYS*a + DELAY_POLYS*N_ANT*b) // Should be correct indexing
-#define coh_bf_idx(p, b, f, t)      (p + N_POL*b + N_BEAM*N_POL*f + N_FREQ*N_BEAM*N_POL*t)
-#define pow_bf_idx(b, f, t)         (f + N_FREQ*t + N_FREQ*N_TIME*b) // Changed to efficiently write each beam to a filterbank file
+#define coh_bf_idx(p, b, f, t)      (p + N_POL*b + N_BEAM*N_POL*f + N_COARSE_FREQ*N_BEAM*N_POL*t)
+#define pow_bf_idx(b, f, t)         (f + N_COARSE_FREQ*t + N_COARSE_FREQ*N_TIME*b) // Changed to efficiently write each beam to a filterbank file
 
 #ifdef __cplusplus
 extern "C" {
