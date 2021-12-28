@@ -623,6 +623,7 @@ if file_exists(path) == True:
     os.unlink(path)
 
 blk_count = 0
+obsfreq = 0
 
 while 1:
     #--------Simulated data for debugging-------#
@@ -643,7 +644,7 @@ while 1:
         blk_count = blk_count+1
         print(path_c)
         print(file_exists(path_c))
-        while file_exists(path_c) == False:
+        while file_exists(path_c) == False and obsfreq == 0: # Assuming obsfreq will never be 0
             #print("In while file_exists == False")
             if file_exists(path_c) == True:
                 print("In if file_exists == True")
@@ -661,9 +662,18 @@ while 1:
                 continue
 
         if file_exists(path_c) == True:
+            print("In second if file_exists == True")
+            print(path_c)
+            print(file_exists(path_c))
+            
+            with open(path_c, 'rb') as fifoc:
+                print("In with open(... rb) for fifoc")
+                obsfreq_tmp = struct.unpack('d', fifoc.read(8))
+                obsfreq = obsfreq_tmp[0]*1e6
+                print("Center frequency (Hz): ", obsfreq)
             os.unlink(path_c)
 
-        print("Center frequency (Hz): ", obsfreq)
+        #print("Center frequency (Hz): ", obsfreq)
 
     print(path_e)
     print(file_exists(path_e))
@@ -685,6 +695,15 @@ while 1:
             continue
 
     if file_exists(path_e) == True:
+        print("In second if file_exists == True")
+        print(path_e)
+        print(file_exists(path_e))
+            
+        with open(path_e, 'rb') as fifo1:
+            print("In with open(... rb) for fifo1")
+            epoch_tmp = struct.unpack('d', fifo1.read(8))
+            epoch_sec = epoch_tmp[0]
+            print("Epoch in seconds: ", epoch_sec)
         os.unlink(path_e)
 
     print(path_e)
