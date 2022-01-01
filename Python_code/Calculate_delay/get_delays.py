@@ -551,7 +551,7 @@ class DelayPolynomial(object):
             targets.append(katpoint.Target(target_string))
         return targets
 
-    def get_delay_polynomials(self, epoch, duration=10.0):
+    def get_delay_polynomials(self, epoch, duration=5.0):
         """
         calculate and return the polynomials
         
@@ -711,7 +711,7 @@ while 1:
     print("Epoch in seconds: ", epoch_sec)
 
     test = DelayPolynomial(obsfreq)
-    output = test.get_delay_polynomials(epoch_sec,duration=2)
+    output = test.get_delay_polynomials(epoch_sec,duration=5)
 
     print("Length of output array: ", len(output))
     print(type(output[0]))
