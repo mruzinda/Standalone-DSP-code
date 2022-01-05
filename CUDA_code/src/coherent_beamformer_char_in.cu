@@ -30,6 +30,10 @@ void coherent_beamformer(cuComplex* input_data, float* coeff, float* output_data
 __global__
 void beamformer_power(float* bf_volt, float* bf_power, int offset);
 
+// Compute power of beamformer output with STI (abs()^2)
+__global__
+void beamformer_power_sti(float* bf_volt, float* bf_power, int offset);
+
 // Convenience function for checking CUDA runtime API results
 // can be wrapped around any runtime API call. No-op in release builds.
 inline
@@ -175,6 +179,60 @@ void beamformer_power(float* bf_volt, float* bf_power, int offset, int n_chan) {
 	return;
 }
 
+// Compute power of beamformer output (abs()^2)
+__global__
+void beamformer_power_sti(float* bf_volt, float* bf_power, int offset, int n_chan) {
+	int f = blockIdx.x;  // Frequency bin index
+	int b = blockIdx.y;  // Beam index
+	int s = blockIdx.z;  // STI window index
+	int t = threadIdx.x; // Time sample index
+
+	int n_freq_streams = n_chan/N_STREAMS;
+	
+	int xp; // X polarization
+	int yp; // Y polarization
+	float x_pol_pow; // XX*
+	float y_pol_pow; // YY*
+	float beam_power;
+	float scale = 1.0/N_TIME_STI;
+
+	__shared__ float reduced_array[N_STI_BLOC];
+
+	if(f < n_freq_streams){	
+		if (t < N_TIME_STI) {
+			// Power = Absolute value squared of output -> r^2 + i^2
+			xp = coh_bf_idx(0, b, (f + offset), s*N_TIME_STI + t, n_chan); // X polarization
+			yp = coh_bf_idx(1, b, (f + offset), s*N_TIME_STI + t, n_chan); // Y polarization
+
+			x_pol_pow = (bf_volt[2 * xp] * bf_volt[2 * xp]) + (bf_volt[2 * xp + 1] * bf_volt[2 * xp + 1]); // XX*
+			y_pol_pow = (bf_volt[2 * yp] * bf_volt[2 * yp]) + (bf_volt[2 * yp + 1] * bf_volt[2 * yp + 1]); // YY*
+			beam_power = x_pol_pow + y_pol_pow; // XX* + YY*
+			reduced_array[t] = beam_power;
+		}
+		else{
+			reduced_array[t] = 0.0;
+		}
+		__syncthreads();
+
+		// Reduction is performed by splitting up the threads in each block and summing them all up.
+		// The number of threads in each block needs to be a power of two in order for the reduction to work. (No left over threads).
+		for(int k = blockDim.x/2; k>0; k>>=1){
+			if(t<k){
+				reduced_array[t] += reduced_array[t+k];
+			}
+			__syncthreads();
+		}
+	
+		// After reduction is complete, assign each reduced value to appropriate position in output array.
+		if(t == 0){
+			int h = pow_bf_idx(b, (f + offset), s, n_chan);
+			bf_power[h] = reduced_array[0]*scale;
+		}
+	}
+
+	return;
+}
+
 // Run beamformer
 float* run_beamformer(signed char* data_in, float* h_coefficient, int n_chan) {
 
@@ -192,8 +250,12 @@ float* run_beamformer(signed char* data_in, float* h_coefficient, int n_chan) {
 	dim3 dimGrid_coh_bf(N_TIME, n_chan, N_BEAM);
 
 	// Output power of beamformer kernel: Specify grid and block dimensions
-	dim3 dimBlock_bf_pow(N_BEAM, 1, 1);
-	dim3 dimGrid_bf_pow(N_TIME, n_chan, 1);
+	//dim3 dimBlock_bf_pow(N_BEAM, 1, 1);
+	//dim3 dimGrid_bf_pow(N_TIME, n_chan, 1);
+
+	// Output power of beamformer kernel with STI: Specify grid and block dimensions
+	dim3 dimBlock_bf_pow(N_STI_BLOC, 1, 1);
+	dim3 dimGrid_bf_pow(n_chan, N_BEAM, N_STI);
 
 	float* d_data_bf = d_data_float;
 	signed char* d_data_in = d_data_char;
@@ -212,8 +274,10 @@ float* run_beamformer(signed char* data_in, float* h_coefficient, int n_chan) {
 	const unsigned long int streamBytesIn = (2*N_ANT*N_POL*N_TIME*n_freq_streams*sizeof(signed char));
 
 	// beamformer_power kernel and cudaMemcpy(DtoH)
-	const int streamSizePow = (N_BEAM*N_TIME*n_freq_streams);
-	const unsigned long int streamBytesPow = (N_BEAM*N_TIME*n_freq_streams*sizeof(float));
+	//const int streamSizePow = (N_BEAM*N_TIME*n_freq_streams);
+	//const unsigned long int streamBytesPow = (N_BEAM*N_TIME*n_freq_streams*sizeof(float));
+	const int streamSizePow = (N_BEAM*N_STI*n_freq_streams);
+	const unsigned long int streamBytesPow = (N_BEAM*N_STI*n_freq_streams*sizeof(float));
 
 	// Create events and streams
 	// Events ////////////////////////////////////
@@ -260,7 +324,8 @@ float* run_beamformer(signed char* data_in, float* h_coefficient, int n_chan) {
 	for (int i = 0; i < N_STREAMS; ++i){
 		int offset = i * n_freq_streams;
 		// Compute power of beamformer output (abs()^2)
-		beamformer_power<<<dimGrid_bf_pow, dimBlock_bf_pow, 0, stream[i]>>>(d_data_bf, d_bf_pow, offset, n_chan);
+		//beamformer_power<<<dimGrid_bf_pow, dimBlock_bf_pow, 0, stream[i]>>>(d_data_bf, d_bf_pow, offset, n_chan);
+		beamformer_power_sti<<<dimGrid_bf_pow, dimBlock_bf_pow, 0, stream[i]>>>(d_data_bf, d_bf_pow, offset, n_chan);
 		err_code = cudaGetLastError();
 		if (err_code != cudaSuccess) {
 			printf("BF: beamformer_power() kernel Failed: %s\n", cudaGetErrorString(err_code));
@@ -483,6 +548,7 @@ float* simulate_coefficients(int n_chan) {
 }
 
 // Generate weights or coefficients with calculated delays (with delay polynomials (tau), coarse frequency channel (coarse_chan), and epoch (t))
+//float* generate_coefficients(float* tau, float* telstate_phase, double* coarse_chan, int n_chan, uint64_t n_real_ant, float t) {
 float* generate_coefficients(float* tau, double* coarse_chan, int n_chan, uint64_t n_real_ant, float t) {
 	float* coefficients;
 	coefficients = (float*)calloc(N_COEFF, sizeof(float));
@@ -498,6 +564,8 @@ float* generate_coefficients(float* tau, double* coarse_chan, int n_chan, uint64
 						delay_offset = tau[delay_idx(0,a,b)];
 						coefficients[2 * coeff_idx(a, p, b, f)] = cos(2 * PI * coarse_chan[f] * (t*delay_rate + delay_offset));
 						coefficients[2 * coeff_idx(a, p, b, f) + 1] = sin(2 * PI * coarse_chan[f] * (t*delay_rate + delay_offset));
+						//coefficients[2 * coeff_idx(a, p, b, f)] = telstate_phase[2*phase_idx(a, p, f)]*cos(2 * PI * coarse_chan[f] * (t*delay_rate + delay_offset)) - telstate_phase[2*phase_idx(a, p, f) + 1]*sin(2 * PI * coarse_chan[f] * (t*delay_rate + delay_offset));
+						//coefficients[2 * coeff_idx(a, p, b, f) + 1] = telstate_phase[2*phase_idx(a, p, f)]*sin(2 * PI * coarse_chan[f] * (t*delay_rate + delay_offset)) + telstate_phase[2*phase_idx(a, p, f) + 1]*cos(2 * PI * coarse_chan[f] * (t*delay_rate + delay_offset));
 					}else{
 						coefficients[2 * coeff_idx(a, p, b, f)] = 0;
 						coefficients[2 * coeff_idx(a, p, b, f) + 1] = 0;
@@ -558,7 +626,7 @@ void cohbfCleanup() {
 }
 
 //Comment out main() function when compiling for hpguppi
-// <----Uncomment here if testing standalone code
+/* // <----Uncomment here if testing standalone code
 // Test all of the kernels and functions, and write the output to
 // a text file for analysis
 int main() {
@@ -678,4 +746,4 @@ int main() {
 
 	return 0;
 }
-// <----Uncomment here if testing standalone code
+*/ // <----Uncomment here if testing standalone code

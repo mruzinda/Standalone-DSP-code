@@ -6,8 +6,11 @@
 
 #define N_POL 2 //2                     // Number of polarizations
 #define N_TIME 8192 //16384 //1 // 8                   // Number of time samples
+#define N_TIME_STI 8
+#define N_STI N_TIME/N_TIME_STI
+#define N_STI_BLOC 32
 #define N_STREAMS 1                     // Number of CUDA streams
-#define N_COARSE_FREQ 16 //32               // Number of coarse channels processed at a time
+#define N_COARSE_FREQ 64 //32               // Number of coarse channels processed at a time
 #define MAX_COARSE_FREQ 512                 // Max number of coarse channels is the number of channels in 32k mode
 #define N_FINE_FREQ 1 //16384               // Number of fine channels per coarse channel 2^14 = 16384
 //#define N_FREQ (N_COARSE_FREQ*N_FINE_FREQ) // Number of frequency bins after second FFT.  Should actually be 2^14, but due to limited memory on my laptop, arbitrarily 10
@@ -21,12 +24,13 @@
 // "2" for inphase and quadrature
 #define N_INPUT       (unsigned long int)(2*N_POL*N_TIME*N_FREQ*N_ANT)       // Size of input. Currently, same size as output
 #define N_REAL_INPUT  (unsigned long int)(2*N_POL*N_TIME*N_FREQ*N_REAL_ANT)  // Size of input. Currently, same size as output
-//#define N_COEFF       (unsigned long int)(2*N_ANT*N_BEAM)                    // Size of beamformer coefficients
 #define N_COEFF       (unsigned long int)(2*N_POL*N_ANT*N_BEAM*N_FREQ)       // Size of beamformer coefficients
+//#define N_PHASE       (unsigned long int)(2*N_POL*N_ANT)                     // Size of telstate phase solution array - Include frequency dimension from meta data
 #define DELAY_POLYS   (unsigned long int)(2)                                 // Number of coefficients in polynomial
 #define N_DELAYS      (unsigned long int)(DELAY_POLYS*N_ANT*N_BEAM)          // Size of first order polynomial delay array
 #define N_OUTPUT      (unsigned long int)(2*N_POL*N_BEAM*N_FREQ*N_TIME)      // Size of beamformer output
-#define N_BF_POW      (unsigned long int)(N_BEAM*N_FREQ*N_TIME)              // Size of beamformer output after abs()^2
+//#define N_BF_POW      (unsigned long int)(N_BEAM*N_FREQ*N_TIME)              // Size of beamformer output after abs()^2
+#define N_BF_POW      (unsigned long int)(N_BEAM*N_FREQ*N_STI)               // Size of beamformer output after abs()^2 and short time integration
 
 #ifndef min
 #define min(a,b) ((a < b) ? a : b)
@@ -46,17 +50,11 @@
 // Don't need an "N_REAL_INPUT" macro since the antennas are initially the slowest moving index 
 #define data_tr_idx(a, p, f, t, Nf)     (a + N_ANT*p + N_POL*N_ANT*f + Nf*N_POL*N_ANT*t)
 #define coeff_idx(a, p, b, f)           (a + N_ANT*p + N_POL*N_ANT*b + N_BEAM*N_POL*N_ANT*f)
+//#define phase_idx(a, p, f)              (a + N_ANT*p + N_POL*N_ANT*f)
 #define delay_idx(d, a, b)              (d + DELAY_POLYS*a + DELAY_POLYS*N_ANT*b) // Should be correct indexing
 #define coh_bf_idx(p, b, f, t, Nf)      (p + N_POL*b + N_BEAM*N_POL*f + Nf*N_BEAM*N_POL*t)
-#define pow_bf_idx(b, f, t, Nf)         (f + Nf*t + Nf*N_TIME*b) // Changed to efficiently write each beam to a filterbank file
-
-//#define data_in_idx(a, p, f, t)     (p + N_POL*t + N_TIME*N_POL*f + N_COARSE_FREQ*N_TIME*N_POL*a)
-// Don't need an "N_REAL_INPUT" macro since the antennas are initially the slowest moving index 
-//#define data_tr_idx(a, p, f, t)     (a + N_ANT*p + N_POL*N_ANT*f + N_COARSE_FREQ*N_POL*N_ANT*t)
-//#define coeff_idx(a, p, b, f)       (a + N_ANT*p + N_POL*N_ANT*b + N_BEAM*N_POL*N_ANT*f)
-//#define delay_idx(d, a, b)          (d + DELAY_POLYS*a + DELAY_POLYS*N_ANT*b) // Should be correct indexing
-//#define coh_bf_idx(p, b, f, t)      (p + N_POL*b + N_BEAM*N_POL*f + N_COARSE_FREQ*N_BEAM*N_POL*t)
-//#define pow_bf_idx(b, f, t)         (f + N_COARSE_FREQ*t + N_COARSE_FREQ*N_TIME*b) // Changed to efficiently write each beam to a filterbank file
+//#define pow_bf_idx(b, f, t, Nf)         (f + Nf*t + Nf*N_TIME*b) // Changed to efficiently write each beam to a filterbank file
+#define pow_bf_idx(b, f, s, Nf)         (f + Nf*s + Nf*N_STI*b) // Changed to efficiently write each beam to a filterbank file
 
 #ifdef __cplusplus
 extern "C" {

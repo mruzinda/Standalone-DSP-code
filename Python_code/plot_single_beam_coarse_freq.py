@@ -37,7 +37,7 @@ for i in range(0,len(contents_tmp)-1):
 # After processing .raw file and writing to filterbank file
 #N_beam = 1
 N_bin = 64 #32                                            # Number of frequency bins or channels in a block
-N_time = 8192 #16384                                      # Number of time samples in a block
+N_time = 1024 # 8192 #16384                                      # Number of time samples in a block
 N_blks = int((len(contents_tmp)-1)/(N_time*N_bin)) # Number of blocks of data in the file
 
 print("N_blks: ", N_blks)
