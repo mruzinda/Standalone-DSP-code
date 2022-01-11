@@ -23,7 +23,7 @@ for i in range(0,len(contents_tmp)-1):
 # Array dimensions
 N_beam = 64
 N_bin = 64
-N_time = 1024 # 8192
+N_time = 1024 # 8192 # STI windows
 
 # Reshape array to 3D -> Time X Bins X Beams
 contents_array = contents_float[0:(N_time*N_bin*N_beam)].reshape(N_beam,N_time,N_bin)

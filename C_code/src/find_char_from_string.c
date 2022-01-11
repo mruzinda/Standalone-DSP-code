@@ -23,7 +23,9 @@
 int main()
 {
   char *fname;
+  char new_fname[ARRAY_SIZE] = {0};
   char path[ARRAY_SIZE] = {0};
+  char new_path[ARRAY_SIZE] = {0};
   fname = "/datag/users/mruzinda/i/guppi_59143_55142_000486_GPS-BIIR-11_0001.0000.raw";
   printf("File name: %s\n",fname);
 
@@ -41,6 +43,15 @@ int main()
   memcpy(path, fname, char_pos+1);
 
   printf("Path to files is: %s\n", path);
+
+  // Change path of file name
+  // First, get file name with no path
+  memcpy(new_fname, &fname[char_pos+1], ARRAY_SIZE-char_pos);
+
+  printf("File name with no path: %s \n", new_fname);
+  strcpy(new_path, "/datag/users/mruzinda/o/");
+  strcat(new_path, new_fname);
+  printf("File name with new path: %s \n", new_path);
 
   // Go to the directory and look for a file with "0000.raw" and wait until it shows up
   char first_raw_ext[ARRAY_SIZE] = {0};
