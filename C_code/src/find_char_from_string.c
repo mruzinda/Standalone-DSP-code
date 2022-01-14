@@ -1,5 +1,4 @@
-// This script tests reading and writing blocks of data to and from both RAW and text files
-// Also using this script to test python module importing.
+// This script tests getting RAW file names from specified directories
 // To compile it:
 // gcc find_char_from_string.c -o find_char_from_string.exe -lm
 // To run it:
@@ -28,6 +27,15 @@ int main()
   char new_path[ARRAY_SIZE] = {0};
   fname = "/datag/users/mruzinda/i/guppi_59143_55142_000486_GPS-BIIR-11_0001.0000.raw";
   printf("File name: %s\n",fname);
+
+  printf("new_fname length = %ld \n", strlen(new_fname));
+  if(strlen(new_fname) == 0){
+    printf("new_fname is empty\n");
+    strcpy(new_fname, "tmp_fname");
+    printf("new_fname = %s \n", new_fname);
+    strcpy(new_fname, "tmp_fname2");
+    printf("new_fname = %s \n", new_fname);
+  }
 
   // Find path to file in file name
   char character = '/';
@@ -60,8 +68,11 @@ int main()
   strcpy(first_raw_ext, "*0000.raw");
   strcpy(first_raw, path);
   strcat(first_raw, first_raw_ext);
-  strcpy(command, "ls ");
-  strcat(command, first_raw);
+  //strcpy(command, "ls ");
+  //strcat(command, first_raw);
+  strcpy(command, "find ");
+  strcat(command, path);
+  strcat(command, " -type f -iname *0000.raw");
 
   printf("Ubuntu command: %s\n", command);
 
