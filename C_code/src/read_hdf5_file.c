@@ -73,27 +73,30 @@ int main()
   hid_t file_id, dataset_id; // identifiers //
   herr_t status;
 
-  typedef struct re_im{
+  typedef struct complex_t{
     int32_t re;
     int32_t im;
-  }re_im;
+  }complex_t;
 
-  re_im dset_data[17110][64][4];
+  // complex_t dset_data[17110][64][4];
+  complex_t *dset_data;
+  dset_data = malloc(17110*64*4*sizeof(complex_t));
 
   hid_t reim_tid;
-  reim_tid = H5Tcreate(H5T_COMPOUND, sizeof(re_im));
-  H5Tinsert(reim_tid, "r", HOFFSET(re_im, re), H5T_STD_I32LE);
-  H5Tinsert(reim_tid, "i", HOFFSET(re_im, im), H5T_STD_I32LE);
+  reim_tid = H5Tcreate(H5T_COMPOUND, sizeof(complex_t));
+  H5Tinsert(reim_tid, "r", HOFFSET(complex_t, re), H5T_STD_I32LE);
+  H5Tinsert(reim_tid, "i", HOFFSET(complex_t, im), H5T_STD_I32LE);
 
   // Open an existing file. //
   file_id = H5Fopen(FILE, H5F_ACC_RDONLY, H5P_DEFAULT);
 
   // Open an existing dataset. //
-  dataset_id = H5Dopen2(file_id, "/Data/visdata", H5P_DEFAULT);
+  dataset_id = H5Dopen(file_id, "/Data/visdata", H5P_DEFAULT);
 
   // Read the dataset. //
   status = H5Dread(dataset_id, reim_tid, H5S_ALL, H5S_ALL, H5P_DEFAULT, dset_data);
   //status = H5Dread(dataset_id, H5T_COMPOUND, H5S_ALL, H5S_ALL, H5P_DEFAULT, dset_data);
+  printf("dset_data[10].re = %d \n",dset_data[10].re);
 
   // Close the dataset. //
   status = H5Dclose(dataset_id);
