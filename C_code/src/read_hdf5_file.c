@@ -71,7 +71,7 @@ int main()
   status = H5Fclose(file_id);
 */
 
-  hid_t file_id, obsid_id, cal_all_id, delays_id, rates_id, time_array_id, sid1, sid2, sid3, sid4; // identifiers //
+  hid_t file_id, obs_id, cal_all_id, delays_id, rates_id, time_array_id, sid1, sid2, sid3, sid4, obs_type, native_obs_type; // identifiers //
   herr_t status, cal_all_elements, delays_elements, rates_elements, time_array_elements;
 
   typedef struct complex_t{
@@ -102,6 +102,24 @@ int main()
   // Open an existing file. //
   file_id = H5Fopen(FILE, H5F_ACC_RDONLY, H5P_DEFAULT);
 
+  // -------------Read obsid first----------------- //
+  // Open an existing dataset. //
+  obs_id = H5Dopen(file_id, "/obsinfo/obsid", H5P_DEFAULT);
+  // Get obsid data type //
+  obs_type = H5Dget_type(obs_id);
+  native_obs_type = H5Tget_native_type(obs_type, H5T_DIR_DEFAULT);
+  int obsid_strsize = (int)H5Tget_size(native_obs_type);
+  printf("obsid string size = %d\n", obsid_strsize);
+  // Allocate memory to string array
+  char obsid_str[obsid_strsize+1];
+  obsid_str[obsid_strsize] = '\0'; // Terminate string
+  // Read the dataset. //
+  status = H5Dread(obs_id, native_obs_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, obsid_str);
+  printf("obsid = %s \n", obsid_str);
+  // Close the dataset. //
+  status = H5Dclose(obs_id);
+  // -----------------------------------------------//
+
   // Open an existing dataset. //
   cal_all_id = H5Dopen(file_id, "/calinfo/cal_all", H5P_DEFAULT);
   delays_id = H5Dopen(file_id, "/delayinfo/delays", H5P_DEFAULT);
@@ -113,7 +131,7 @@ int main()
   sid2 =  H5Dget_space(delays_id);
   sid3 =  H5Dget_space(rates_id);
   sid4 =  H5Dget_space(time_array_id);
-  
+
   // Gets the number of elements in the data set //
   cal_all_elements=H5Sget_simple_extent_npoints(sid1);
   delays_elements=H5Sget_simple_extent_npoints(sid2);
@@ -130,7 +148,7 @@ int main()
   rates_data = malloc((int)rates_elements*sizeof(double));
   time_array_data = malloc((int)time_array_elements*sizeof(double));
 
-  // Read the dataset. //
+  // Read the dataset //
   status = H5Dread(cal_all_id, reim_tid, H5S_ALL, H5S_ALL, H5P_DEFAULT, cal_all_data);
   printf("cal_all_data[%d].re = %f \n", a + Nant*p + Npol*Nant*c, cal_all_data[a + Nant*p + Npol*Nant*c].re);
 
