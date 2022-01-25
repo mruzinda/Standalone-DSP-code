@@ -71,7 +71,7 @@ int main()
   status = H5Fclose(file_id);
 */
 
-  hid_t file_id, obs_id, cal_all_id, delays_id, rates_id, time_array_id, sid1, sid2, sid3, sid4, obs_type, native_obs_type; // identifiers //
+  hid_t file_id, npol_id, nbeams_id, obs_id, cal_all_id, delays_id, rates_id, time_array_id, sid1, sid2, sid3, sid4, obs_type, native_obs_type; // identifiers //
   herr_t status, cal_all_elements, delays_elements, rates_elements, time_array_elements;
 
   typedef struct complex_t{
@@ -88,6 +88,8 @@ int main()
   double *delays_data;
   double *rates_data;
   double *time_array_data;
+  uint64_t nbeams;
+  uint64_t npol;
 
   int Nant = 61;    // Number of antennas
   int Nbeams = 61;  // Number of beams
@@ -125,12 +127,14 @@ int main()
   delays_id = H5Dopen(file_id, "/delayinfo/delays", H5P_DEFAULT);
   rates_id = H5Dopen(file_id, "/delayinfo/rates", H5P_DEFAULT);
   time_array_id = H5Dopen(file_id, "/delayinfo/time_array", H5P_DEFAULT);
+  npol_id = H5Dopen(file_id, "/diminfo/npol", H5P_DEFAULT);
+  nbeams_id = H5Dopen(file_id, "/diminfo/nbeams", H5P_DEFAULT);
 
   // Get dataspace ID //
-  sid1 =  H5Dget_space(cal_all_id);
-  sid2 =  H5Dget_space(delays_id);
-  sid3 =  H5Dget_space(rates_id);
-  sid4 =  H5Dget_space(time_array_id);
+  sid1 = H5Dget_space(cal_all_id);
+  sid2 = H5Dget_space(delays_id);
+  sid3 = H5Dget_space(rates_id);
+  sid4 = H5Dget_space(time_array_id);
 
   // Gets the number of elements in the data set //
   cal_all_elements=H5Sget_simple_extent_npoints(sid1);
@@ -161,11 +165,19 @@ int main()
   status = H5Dread(time_array_id, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, time_array_data);
   printf("time_array_data[0] = %lf \n", time_array_data[0]);
 
+  status = H5Dread(npol_id, H5T_STD_I64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &npol);
+  printf("npol = %d \n", (int)npol);
+
+  status = H5Dread(nbeams_id, H5T_STD_I64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &nbeams);
+  printf("nbeams = %d \n", (int)nbeams);
+
   // Close the dataset. //
   status = H5Dclose(cal_all_id);
   status = H5Dclose(delays_id);
   status = H5Dclose(rates_id);
   status = H5Dclose(time_array_id);
+  status = H5Dclose(npol_id);
+  status = H5Dclose(nbeams_id);
 
   // Close the file. //
   status = H5Fclose(file_id);

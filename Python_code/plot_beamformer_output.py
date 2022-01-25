@@ -5,7 +5,8 @@ import numpy as np
 
 # Open text file containing beamformer output
 #f = open("output_d_c.txt", 'r')
-f = open("/home/mruzinda/beamformer_workspace/src/output_d_cuda.txt", 'r')
+#f = open("/home/mruzinda/beamformer_workspace/src/output_d_cuda.txt", 'r')
+f = open("/home/mruzinda/hpguppi_proc/coherent_beamformer/src/output_d_cuda.txt", 'r')
 #f = open("output_d_c_simple.txt", 'r')
 #f = open("output_d_cuda_simple.txt", 'r')
 
@@ -21,7 +22,7 @@ for i in range(0,len(contents_tmp)-1):
     contents_float[i] = float(contents_tmp[i])
 
 # Array dimensions
-N_beam = 64
+N_beam = 61 # 64
 N_bin = 64
 N_time = 1024 # 8192 # STI windows
 
