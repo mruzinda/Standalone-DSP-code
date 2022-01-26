@@ -18,6 +18,9 @@
 #include <string.h>
 #include "hdf5.h"
 
+#define cal_all_idx(a, p, f, Na, Np)            (a + Na*p + Np*Na*f)
+#define delay_rates_idx(a, b, t, Na, Nb)        (a + Na*b + Nb*Na*t)
+
 //#define FILE "/datag/users/mruzinda/hdf5/blk4.uvh5"
 #define FILE "/datag/users/mruzinda/hdf5/test.bfr5"
 
@@ -153,23 +156,23 @@ int main()
   time_array_data = malloc((int)time_array_elements*sizeof(double));
 
   // Read the dataset //
-  status = H5Dread(cal_all_id, reim_tid, H5S_ALL, H5S_ALL, H5P_DEFAULT, cal_all_data);
-  printf("cal_all_data[%d].re = %f \n", a + Nant*p + Npol*Nant*c, cal_all_data[a + Nant*p + Npol*Nant*c].re);
-
-  status = H5Dread(delays_id, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, delays_data);
-  printf("delays_data[%d] = %lf \n", a + Nant*b + Nbeams*Nant*t, delays_data[a + Nant*b + Nbeams*Nant*t]);
-
-  status = H5Dread(rates_id, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, rates_data);
-  printf("rates_data[%d] = %lf \n", a + Nant*b + Nbeams*Nant*t, rates_data[a + Nant*b + Nbeams*Nant*t]);
-
-  status = H5Dread(time_array_id, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, time_array_data);
-  printf("time_array_data[0] = %lf \n", time_array_data[0]);
-
   status = H5Dread(npol_id, H5T_STD_I64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &npol);
   printf("npol = %d \n", (int)npol);
 
   status = H5Dread(nbeams_id, H5T_STD_I64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &nbeams);
   printf("nbeams = %d \n", (int)nbeams);
+
+  status = H5Dread(cal_all_id, reim_tid, H5S_ALL, H5S_ALL, H5P_DEFAULT, cal_all_data);
+  printf("cal_all_data[%d].re = %f \n", cal_all_idx(a, p, c, Nant, (int)npol), cal_all_data[cal_all_idx(a, p, c, Nant, (int)npol)].re);
+
+  status = H5Dread(delays_id, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, delays_data);
+  printf("delays_data[%d] = %lf \n", delay_rates_idx(a, b, t, Nant, (int)nbeams), delays_data[delay_rates_idx(a, b, t, Nant, (int)nbeams)]);
+
+  status = H5Dread(rates_id, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, rates_data);
+  printf("rates_data[%d] = %lf \n", delay_rates_idx(a, b, t, Nant, (int)nbeams), rates_data[delay_rates_idx(a, b, t, Nant, (int)nbeams)]);
+
+  status = H5Dread(time_array_id, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, time_array_data);
+  printf("time_array_data[0] = %lf \n", time_array_data[0]);
 
   // Close the dataset. //
   status = H5Dclose(cal_all_id);
