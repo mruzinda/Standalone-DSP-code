@@ -1,6 +1,6 @@
 // This script reads the filterbank files gets a block of data and writes it to a text file for further processing.
 // To compile it:
-// gcc fb_file_analysis.c -o fb_file_analysis.exe -I/home/mruzinda/beamformer_workspace/include -L/home/mruzinda/beamformer_workspace/lib/ -lrawspec
+// gcc fb_file_analysis.c -o fb_file_analysis.exe -I/home/mruzinda/hpguppi_proc/include -L/home/mruzinda/hpguppu_proc/lib/ -lrawspec
 // To run it:
 // ./fb_file_analysis.exe /datag/users/mruzinda/oics/guppi_59143_55142_000486_GPS-BIIR-11_0001-ics.rawspec.0000.fil
 // where the file in the argument is an example
@@ -98,7 +98,7 @@ int main(int argc, char * argv[])
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test12.txt"); // sim-cbf - After change from 32 to 64 coarse channs
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test13.txt"); // cbf - RAW file input after time averaging added to python post-proc
 		//strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test14.txt"); // cbf - RAW file input after time averaging added to python post-proc
-		strcpy(output_filename, "/datag/users/mruzinda/out_txt/output_d_test15.txt"); // cbf - RAW FILE input - Only one beam per file (so same structure as rawspec)
+		strcpy(output_filename, "/mydatag/20220120/0024/output_d_test.txt"); // cbf - RAW FILE input - Only one beam per file (so same structure as rawspec)
 
 		FILE* output_file;
 
@@ -119,6 +119,8 @@ int main(int argc, char * argv[])
     				printf("fch1 %.17g\n", hdr.fch1);
 				printf("foff %.17g\n", hdr.foff);
 				printf("nbeams %d\n", hdr.nbeams);
+                                printf("src_raj %g\n", hdr.src_raj);
+				printf("src_dej %g\n", hdr.src_dej);
 			}
 			if(sinlge_beam_flag == 0){ // Currently, coherent beamformer 
 				hdr_size = fb_fd_read_header(fd, &hdr, NULL);
@@ -126,6 +128,8 @@ int main(int argc, char * argv[])
     				printf("fch1 %.17g\n", hdr.fch1);
 				printf("foff %.17g\n", hdr.foff);
 				printf("nbeams %d\n", hdr.nbeams);
+                                printf("src_raj %g\n", hdr.src_raj);
+				printf("src_dej %g\n", hdr.src_dej);
 			}
     			
 			sz = read(fd, buff, blk_size*sizeof(float));

@@ -22,7 +22,7 @@
 #define delay_rates_idx(a, b, t, Na, Nb)        (a + Na*b + Nb*Na*t)
 
 //#define FILE "/datag/users/mruzinda/hdf5/blk4.uvh5"
-#define FILE "/datag/users/mruzinda/hdf5/test.bfr5"
+#define FILE "/home/obs/20211220/0016/guppi_59600_66373_001540_J0408-6545_0001.bfr5"
 
 int main()
 {
@@ -74,8 +74,8 @@ int main()
   status = H5Fclose(file_id);
 */
 
-  hid_t file_id, npol_id, nbeams_id, obs_id, cal_all_id, delays_id, rates_id, time_array_id, sid1, sid2, sid3, sid4, obs_type, native_obs_type; // identifiers //
-  herr_t status, cal_all_elements, delays_elements, rates_elements, time_array_elements;
+  hid_t file_id, npol_id, nbeams_id, obs_id, src_id, cal_all_id, delays_id, rates_id, time_array_id, ra_id, dec_id, sid1, sid2, sid3, sid4, sid5, sid6, sid8, obs_type, src_type, native_obs_type, native_src_type; // identifiers //
+  herr_t status, cal_all_elements, delays_elements, rates_elements, time_array_elements, ra_elements, dec_elements, src_elements;
 
   typedef struct complex_t{
     float re;
@@ -91,12 +91,14 @@ int main()
   double *delays_data;
   double *rates_data;
   double *time_array_data;
+  double *ra_data;
+  double *dec_data;
   uint64_t nbeams;
   uint64_t npol;
 
-  int Nant = 61;    // Number of antennas
+  int Nant = 63;    // Number of antennas
   int Nbeams = 61;  // Number of beams
-  int Ntimes = 300; // Number of time stamps
+  int Ntimes = 30; // Number of time stamps
   int Npol = 2;     // Number of polarizations
   int a = 34; // Antenna index
   int b = 1;  // Beam index
@@ -125,11 +127,46 @@ int main()
   status = H5Dclose(obs_id);
   // -----------------------------------------------//
 
+  // -------------Read source names----------------- //
+  // Open an existing dataset. //
+  src_id = H5Dopen(file_id, "/beaminfo/src_names", H5P_DEFAULT);
+
+  // Get dataspace ID //
+  sid8 = H5Dget_space(src_id);
+
+  // Gets the number of elements in the data set //
+  src_elements=H5Sget_simple_extent_npoints(sid8);
+  printf("Number of elements in the src_names dataset is : %d\n", src_elements);
+
+  // Create src_names data type //
+  native_src_type = H5Tvlen_create(H5T_NATIVE_CHAR);
+
+  // Allocate memory to string array
+  //hvl_t srcid_str[src_elements];
+  hvl_t *srcid_str;
+  srcid_str = malloc((int)src_elements*sizeof(hvl_t));
+
+  // Read the dataset. //
+  status = H5Dread(src_id, native_src_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, srcid_str);
+
+  for(int i=0; i<src_elements; i++) {
+    printf("%d: len: %d, str is: %s\n", i, (int)srcid_str[i].len, (char *)srcid_str[i].p);
+  }
+
+  // Free the memory and reset each element in the array //
+  status = H5Dvlen_reclaim(native_src_type, sid8, H5P_DEFAULT, srcid_str);
+
+  // Close the dataset //
+  status = H5Dclose(src_id);
+  // -----------------------------------------------//
+
   // Open an existing dataset. //
   cal_all_id = H5Dopen(file_id, "/calinfo/cal_all", H5P_DEFAULT);
   delays_id = H5Dopen(file_id, "/delayinfo/delays", H5P_DEFAULT);
   rates_id = H5Dopen(file_id, "/delayinfo/rates", H5P_DEFAULT);
   time_array_id = H5Dopen(file_id, "/delayinfo/time_array", H5P_DEFAULT);
+  ra_id = H5Dopen(file_id, "/beaminfo/ras", H5P_DEFAULT);
+  dec_id = H5Dopen(file_id, "/beaminfo/decs", H5P_DEFAULT);
   npol_id = H5Dopen(file_id, "/diminfo/npol", H5P_DEFAULT);
   nbeams_id = H5Dopen(file_id, "/diminfo/nbeams", H5P_DEFAULT);
 
@@ -138,22 +175,30 @@ int main()
   sid2 = H5Dget_space(delays_id);
   sid3 = H5Dget_space(rates_id);
   sid4 = H5Dget_space(time_array_id);
+  sid5 = H5Dget_space(ra_id);
+  sid6 = H5Dget_space(dec_id);
 
   // Gets the number of elements in the data set //
   cal_all_elements=H5Sget_simple_extent_npoints(sid1);
   delays_elements=H5Sget_simple_extent_npoints(sid2);
   rates_elements=H5Sget_simple_extent_npoints(sid3);
   time_array_elements=H5Sget_simple_extent_npoints(sid4);
+  ra_elements=H5Sget_simple_extent_npoints(sid5);
+  dec_elements=H5Sget_simple_extent_npoints(sid6);
   printf("Number of elements in the cal_all dataset is : %d\n", cal_all_elements);
   printf("Number of elements in the delays dataset is : %d\n", delays_elements);
   printf("Number of elements in the rates dataset is : %d\n", rates_elements);
   printf("Number of elements in the time_array dataset is : %d\n", time_array_elements);
+  printf("Number of elements in the ra dataset is : %d\n", ra_elements);
+  printf("Number of elements in the dec dataset is : %d\n", dec_elements);
 
   // Allocate memory for array
   cal_all_data = malloc((int)cal_all_elements*sizeof(complex_t));
   delays_data = malloc((int)delays_elements*sizeof(double));
   rates_data = malloc((int)rates_elements*sizeof(double));
   time_array_data = malloc((int)time_array_elements*sizeof(double));
+  ra_data = malloc((int)ra_elements*sizeof(double));
+  dec_data = malloc((int)dec_elements*sizeof(double));
 
   // Read the dataset //
   status = H5Dread(npol_id, H5T_STD_I64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &npol);
@@ -174,11 +219,19 @@ int main()
   status = H5Dread(time_array_id, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, time_array_data);
   printf("time_array_data[0] = %lf \n", time_array_data[0]);
 
+  status = H5Dread(ra_id, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, ra_data);
+  printf("ra_data[0] = %lf \n", ra_data[0]);
+
+  status = H5Dread(dec_id, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, dec_data);
+  printf("dec_data[0] = %lf \n", dec_data[0]);
+
   // Close the dataset. //
   status = H5Dclose(cal_all_id);
   status = H5Dclose(delays_id);
   status = H5Dclose(rates_id);
   status = H5Dclose(time_array_id);
+  status = H5Dclose(ra_id);
+  status = H5Dclose(dec_id);
   status = H5Dclose(npol_id);
   status = H5Dclose(nbeams_id);
 
@@ -195,6 +248,10 @@ int main()
       }
     }
   }
+
+  char tmp_string[3][5] = {"abcd\0", "efgh\0", "ijkl\0",};
+  printf("Size of tmp_string = %lu\n",sizeof(tmp_string));
+  printf("tmp_string = %s\n",&tmp_string[1][0]);
 
   return 0;
 }

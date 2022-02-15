@@ -6,7 +6,8 @@ import numpy as np
 # Open text file containing beamformer output
 #f = open("output_d_c.txt", 'r')
 #f = open("/home/mruzinda/beamformer_workspace/src/output_d_cuda.txt", 'r')
-f = open("/home/mruzinda/hpguppi_proc/coherent_beamformer/src/output_d_cuda.txt", 'r')
+#f = open("/home/mruzinda/hpguppi_proc/coherent_beamformer/src/output_d_cuda.txt", 'r')
+f = open("/mydatag/20220120/0024/output_d_test.txt", 'r')
 #f = open("output_d_c_simple.txt", 'r')
 #f = open("output_d_cuda_simple.txt", 'r')
 
@@ -22,9 +23,9 @@ for i in range(0,len(contents_tmp)-1):
     contents_float[i] = float(contents_tmp[i])
 
 # Array dimensions
-N_beam = 61 # 64
-N_bin = 64
-N_time = 1024 # 8192 # STI windows
+N_beam = 1 # 61 # 64
+N_bin = 512 # 64
+N_time = 485*128 # 1024 # 8192 # STI windows
 
 # Reshape array to 3D -> Time X Bins X Beams
 contents_array = contents_float[0:(N_time*N_bin*N_beam)].reshape(N_beam,N_time,N_bin)
@@ -60,11 +61,11 @@ fig, axs = plt.subplots(2, 2)
 fig.suptitle('Power spectra of individual beams')
 axs[0, 0].plot(contents_array[0,time_idx,0:N_bin])
 axs[0, 0].set_title('Beam 1')
-axs[0, 1].plot(contents_array[1,time_idx,0:N_bin], 'tab:orange')
+axs[0, 1].plot(contents_array[0,time_idx,0:N_bin], 'tab:orange')
 axs[0, 1].set_title('Beam 2')
-axs[1, 0].plot(contents_array[2,time_idx,0:N_bin], 'tab:green')
+axs[1, 0].plot(contents_array[0,time_idx,0:N_bin], 'tab:green')
 axs[1, 0].set_title('Beam 3')
-axs[1, 1].plot(contents_array[3,time_idx,0:N_bin], 'tab:red')
+axs[1, 1].plot(contents_array[0,time_idx,0:N_bin], 'tab:red')
 axs[1, 1].set_title('Beam 4')
 
 # set the spacing between subplots
@@ -95,11 +96,11 @@ fig, axs = plt.subplots(2, 2)
 fig.suptitle('Power over time of individual beams')
 axs[0, 0].plot(contents_array[0,0:N_time,freq_idx])
 axs[0, 0].set_title('Beam 1')
-axs[0, 1].plot(contents_array[1,0:N_time,freq_idx], 'tab:orange')
+axs[0, 1].plot(contents_array[0,0:N_time,freq_idx], 'tab:orange')
 axs[0, 1].set_title('Beam 2')
-axs[1, 0].plot(contents_array[2,0:N_time,freq_idx], 'tab:green')
+axs[1, 0].plot(contents_array[0,0:N_time,freq_idx], 'tab:green')
 axs[1, 0].set_title('Beam 3')
-axs[1, 1].plot(contents_array[33,0:N_time,freq_idx], 'tab:red')
+axs[1, 1].plot(contents_array[0,0:N_time,freq_idx], 'tab:red')
 axs[1, 1].set_title('Beam 33')
 
 # set the spacing between subplots
