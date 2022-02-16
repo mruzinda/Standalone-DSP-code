@@ -23,6 +23,7 @@
 
 //#define FILE "/datag/users/mruzinda/hdf5/blk4.uvh5"
 #define FILE "/home/obs/20211220/0016/guppi_59600_66373_001540_J0408-6545_0001.bfr5"
+#define BASEFILE "guppi_59600_66373_001540_J0408-6545_0001.bfr5"
 
 int main()
 {
@@ -74,7 +75,7 @@ int main()
   status = H5Fclose(file_id);
 */
 
-  hid_t file_id, npol_id, nbeams_id, obs_id, src_id, cal_all_id, delays_id, rates_id, time_array_id, ra_id, dec_id, sid1, sid2, sid3, sid4, sid5, sid6, sid8, obs_type, src_type, native_obs_type, native_src_type; // identifiers //
+  hid_t file_id, npol_id, nbeams_id, obs_id, src_id, cal_all_id, delays_id, rates_id, time_array_id, ra_id, dec_id, sid1, sid2, sid3, sid4, sid5, sid6, src_dspace_id, obs_type, src_type, native_obs_type, native_src_type; // identifiers //
   herr_t status, cal_all_elements, delays_elements, rates_elements, time_array_elements, ra_elements, dec_elements, src_elements;
 
   typedef struct complex_t{
@@ -95,6 +96,7 @@ int main()
   double *dec_data;
   uint64_t nbeams;
   uint64_t npol;
+  hvl_t *src_names_str;
 
   int Nant = 63;    // Number of antennas
   int Nbeams = 61;  // Number of beams
@@ -132,29 +134,28 @@ int main()
   src_id = H5Dopen(file_id, "/beaminfo/src_names", H5P_DEFAULT);
 
   // Get dataspace ID //
-  sid8 = H5Dget_space(src_id);
+  src_dspace_id = H5Dget_space(src_id);
 
   // Gets the number of elements in the data set //
-  src_elements=H5Sget_simple_extent_npoints(sid8);
+  src_elements=H5Sget_simple_extent_npoints(src_dspace_id);
   printf("Number of elements in the src_names dataset is : %d\n", src_elements);
 
   // Create src_names data type //
   native_src_type = H5Tvlen_create(H5T_NATIVE_CHAR);
 
   // Allocate memory to string array
-  //hvl_t srcid_str[src_elements];
-  hvl_t *srcid_str;
-  srcid_str = malloc((int)src_elements*sizeof(hvl_t));
+  //hvl_t src_names_str[src_elements];
+  src_names_str = malloc((int)src_elements*sizeof(hvl_t));
 
   // Read the dataset. //
-  status = H5Dread(src_id, native_src_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, srcid_str);
+  status = H5Dread(src_id, native_src_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, src_names_str);
 
   for(int i=0; i<src_elements; i++) {
-    printf("%d: len: %d, str is: %s\n", i, (int)srcid_str[i].len, (char *)srcid_str[i].p);
+    printf("%d: len: %d, str is: %s\n", i, (int)src_names_str[i].len, (char *)src_names_str[i].p);
   }
 
   // Free the memory and reset each element in the array //
-  status = H5Dvlen_reclaim(native_src_type, sid8, H5P_DEFAULT, srcid_str);
+  status = H5Dvlen_reclaim(native_src_type, src_dspace_id, H5P_DEFAULT, src_names_str);
 
   // Close the dataset //
   status = H5Dclose(src_id);
@@ -252,6 +253,37 @@ int main()
   char tmp_string[3][5] = {"abcd\0", "efgh\0", "ijkl\0",};
   printf("Size of tmp_string = %lu\n",sizeof(tmp_string));
   printf("tmp_string = %s\n",&tmp_string[1][0]);
+
+  char character = '_';
+  char *char_offset;
+  long int last_underscore_pos;
+  char basefilename[200];
+  char base_src[200];
+  char base_no_src[200];
+
+  strcpy(basefilename, BASEFILE);
+  
+  // Get basefilename with no path and place in status buffer
+  // strrchr() finds the last occurence of the specified character
+  char_offset = strrchr(basefilename, character);
+  last_underscore_pos = char_offset-basefilename;
+  printf("The last position of %c is %ld \n", character, last_underscore_pos);
+
+  // Get file name with no path
+  memcpy(base_src, &basefilename[0], last_underscore_pos);
+  base_src[last_underscore_pos] = '\0';
+  printf("File name with source name: %s \n", base_src);
+
+  // Get basefilename with no path and place in status buffer
+  // strrchr() finds the last occurence of the specified character
+  char_offset = strrchr(base_src, character);
+  last_underscore_pos = char_offset-base_src;
+  printf("The last position of %c is %ld \n", character, last_underscore_pos);
+
+  // Get file name with no path
+  memcpy(base_no_src, &base_src[0], last_underscore_pos+1);
+  base_no_src[last_underscore_pos+1] = '\0';
+  printf("File name with no source name: %s \n", base_no_src);
 
   return 0;
 }
