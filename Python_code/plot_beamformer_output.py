@@ -6,8 +6,8 @@ import numpy as np
 # Open text file containing beamformer output
 #f = open("output_d_c.txt", 'r')
 #f = open("/home/mruzinda/beamformer_workspace/src/output_d_cuda.txt", 'r')
-#f = open("/home/mruzinda/hpguppi_proc/coherent_beamformer/src/output_d_cuda.txt", 'r')
-f = open("/mydatag/20220120/0024/output_d_test.txt", 'r')
+f = open("/home/mruzinda/hpguppi_proc/coherent_beamformer/src/output_d_cuda.txt", 'r')
+#f = open("/mydatag/20220120/0024/output_d_test.txt", 'r')
 #f = open("output_d_c_simple.txt", 'r')
 #f = open("output_d_cuda_simple.txt", 'r')
 
@@ -23,9 +23,9 @@ for i in range(0,len(contents_tmp)-1):
     contents_float[i] = float(contents_tmp[i])
 
 # Array dimensions
-N_beam = 1 # 61 # 64
-N_bin = 512 # 64
-N_time = 485*128 # 1024 # 8192 # STI windows
+N_beam = 61 # 64
+N_bin = 64
+N_time = 1024 # 485*128 # 8192 # STI windows
 
 # Reshape array to 3D -> Time X Bins X Beams
 contents_array = contents_float[0:(N_time*N_bin*N_beam)].reshape(N_beam,N_time,N_bin)
@@ -42,6 +42,9 @@ plt.title('Intensity map (Frequency vs. time)')
 plt.ylabel('Time samples')
 plt.xlabel('Frequency bins')
 plt.show()
+
+#print(contents_array[0,0,(N_bin-10):(N_bin-1)])
+#print(contents_array[0:N_beam,0,5])
 
 # Plot of power spectrum
 plt.plot(contents_array[beam_idx,time_idx,0:N_bin])
@@ -96,11 +99,11 @@ fig, axs = plt.subplots(2, 2)
 fig.suptitle('Power over time of individual beams')
 axs[0, 0].plot(contents_array[0,0:N_time,freq_idx])
 axs[0, 0].set_title('Beam 1')
-axs[0, 1].plot(contents_array[0,0:N_time,freq_idx], 'tab:orange')
+axs[0, 1].plot(contents_array[1,0:N_time,freq_idx], 'tab:orange')
 axs[0, 1].set_title('Beam 2')
-axs[1, 0].plot(contents_array[0,0:N_time,freq_idx], 'tab:green')
+axs[1, 0].plot(contents_array[2,0:N_time,freq_idx], 'tab:green')
 axs[1, 0].set_title('Beam 3')
-axs[1, 1].plot(contents_array[0,0:N_time,freq_idx], 'tab:red')
+axs[1, 1].plot(contents_array[33,0:N_time,freq_idx], 'tab:red')
 axs[1, 1].set_title('Beam 33')
 
 # set the spacing between subplots
@@ -122,12 +125,13 @@ plt.show()
 f.close()
 
 # Check with incrementing set of simulated data and coefficients
-chk_flag = 0
+chk_flag = 1
 if(chk_flag==1):
     beam_idx = 64 # Change beam index to see what the output of the corresponding beam should be
     tmp_calc = 0
-    for i in range(1,65):
-        tmp_calc = tmp_calc + beam_idx*i
+    for i in range(1,62):
+        #tmp_calc = tmp_calc + beam_idx*i
+        tmp_calc = tmp_calc + i
         
-    print(tmp_calc) # Output of beamformer
-    print(tmp_calc*tmp_calc + tmp_calc*tmp_calc) # Output power with imaginary part set to zero
+    print(tmp_calc*64*8) # Output of beamformer
+    #print(tmp_calc*tmp_calc + tmp_calc*tmp_calc) # Output power with imaginary part set to zero

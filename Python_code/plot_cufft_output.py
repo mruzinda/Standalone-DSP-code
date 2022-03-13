@@ -23,46 +23,59 @@ for i in range(0,len(contents_tmp)-1):
     contents_float[i] = float(contents_tmp[i])
 
 # Array dimensions
-N_bin = 64*1024
-N_time = 8
+N_fine = 1024
+N_coarse = 64
+N_win = 8
 N_pol = 2
 N_ant = 64 
-IQ = 2
+N_iq = 2
 
 # Reshape array to 3D -> Antenna X Polarization X Time X Bins
-contents_array = contents_float[0:(N_bin*N_time*N_pol*N_ant*IQ)].reshape(N_bin,N_time,N_pol,N_ant,IQ)
+contents_array = contents_float[0:(N_coarse*N_win*N_pol*N_ant*N_fine*N_iq)].reshape(N_coarse,N_win,N_pol,N_ant,N_fine,N_iq)
+
+contents_restructure = np.zeros(N_win*N_pol*N_ant*N_coarse*N_fine*N_iq).reshape(N_win,N_pol,N_ant,N_coarse*N_fine,N_iq)
+
+# Combine coarse and fine channels
+for c in range(0,N_coarse):
+    for w in range(0,N_win):
+        for p in range(0,N_pol):
+            for a in range(0,N_ant):
+                for iq in range(0,N_iq):
+                    contents_restructure[w,p,a,(0+c*N_fine):(N_fine+c*N_fine),iq] = contents_array[c,w,p,a,0:N_fine,iq]
 
 ant_idx = 0 # beam index to plot
-pol_idx = 0 # time sample index to plot
-
+pol_idx = 0 # polarization index to plot
+time_idx = 0 # time sample index to plot
+coarse_idx = 0 # coarse channel index to plot
+iq_idx = 0 # Real or imaginary component
 # Plot intensity map of frequency vs. time
 # "interpolation ='none'" removes interpolation which was there by default. 
 # I'm only removing it for the sake of accurate analysis and diagnosis.
-#plt.imshow(contents_array[0:N_time,0:N_bin,beam_idx], extent=[1, N_bin, 1, N_time], aspect='auto', interpolation='bicubic')
-plt.imshow(contents_array[0:N_bin,0:N_time,pol_idx,ant_idx,1], extent=[1, N_time, 1, N_bin], aspect='auto', interpolation='none')
+#plt.imshow(contents_array[0:N_win,0:N_coarse,beam_idx], extent=[1, N_coarse, 1, N_win], aspect='auto', interpolation='bicubic')
+#plt.imshow(contents_array[coarse_idx,0:N_win,pol_idx,ant_idx,0:N_fine,iq_idx], extent=[1, N_fine, 1, N_win], aspect='auto', interpolation='none')
+plt.imshow(contents_restructure[0:N_win,pol_idx,ant_idx,0:N_coarse*N_fine,iq_idx], extent=[1, N_coarse*N_fine, 1, N_win], aspect='auto', interpolation='none')
 plt.title('Intensity map (Frequency vs. time)')
 plt.ylabel('Time samples')
 plt.xlabel('Frequency bins')
 plt.show()
 
-time_idx = 0
-
 # Plot of power spectrum
-plt.plot(contents_array[0:N_bin,time_idx,pol_idx,ant_idx,1])
+#plt.plot(contents_array[coarse_idx,time_idx,pol_idx,ant_idx,0:N_fine,iq_idx])
+plt.plot(contents_restructure[time_idx,pol_idx,ant_idx,0:N_coarse*N_fine,iq_idx])
 plt.title('FFT at a time window')
-plt.xlabel('Frequency bins')
+plt.xlabel('Fine frequency channels')
 plt.ylabel('Raw voltage (arb.)')
 plt.show()
 
 fig, axs = plt.subplots(2, 2)
 fig.suptitle('FFT at different antennas')
-axs[0, 0].plot(contents_array[0:N_bin,time_idx,pol_idx,0,1])
+axs[0, 0].plot(contents_restructure[time_idx,pol_idx,0,0:N_coarse*N_fine,iq_idx])
 axs[0, 0].set_title('Ant 1')
-axs[0, 1].plot(contents_array[0:N_bin,time_idx,pol_idx,1,1], 'tab:orange')
+axs[0, 1].plot(contents_restructure[time_idx,pol_idx,1,0:N_coarse*N_fine,iq_idx], 'tab:orange')
 axs[0, 1].set_title('Ant 2')
-axs[1, 0].plot(contents_array[0:N_bin,time_idx,pol_idx,2,1], 'tab:green')
+axs[1, 0].plot(contents_restructure[time_idx,pol_idx,2,0:N_coarse*N_fine,iq_idx], 'tab:green')
 axs[1, 0].set_title('Ant 3')
-axs[1, 1].plot(contents_array[0:N_bin,time_idx,pol_idx,3,1], 'tab:red')
+axs[1, 1].plot(contents_restructure[time_idx,pol_idx,57,0:N_coarse*N_fine,iq_idx], 'tab:red')
 axs[1, 1].set_title('Ant 4')
 
 # set the spacing between subplots
