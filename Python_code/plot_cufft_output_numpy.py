@@ -4,27 +4,20 @@ from array import array
 import numpy as np
 
 # Open text file containing beamformer output
-#f = open("output_d_c.txt", 'r')
-#f = open("/home/mruzinda/beamformer_workspace/src/output_d_cuda.txt", 'r')
-#f = open("/home/mruzinda/hpguppi_proc/coherent_beamformer/src/output_d_cuda.txt", 'r')
-f = open("/datag/users/mruzinda/o/output_d_cufft.txt", 'r')
-#f = open("output_d_c_simple.txt", 'r')
-#f = open("output_d_cuda_simple.txt", 'r')
+filename = "/datag/users/mruzinda/o/output_d_cufft.bin"
+
+# Read file contents: np.fromfile(filename, dtype=float, count=- 1, sep='', offset=0)
+contents_float = np.fromfile(filename, dtype=np.float32)
 
 # Read file contents
-contents = f.read()
+#contents = bytearray(f.read(4*2*131072))
 
-# Split elements based on new line i.e. '\n'
-contents_tmp = contents.split('\n')
-
-# Convert contents from string to float
-contents_float = np.zeros(len(contents_tmp))
-for i in range(0,len(contents_tmp)-1):
-    contents_float[i] = float(contents_tmp[i])
+print(len(contents_float))
+print(contents_float[0])
 
 # Array dimensions
-N_fine = 1024
-N_coarse = 64
+N_fine = 1024 # 2^17 
+N_coarse = 64 # 4
 N_win = 8
 N_pol = 2
 N_ant = 64 
@@ -93,6 +86,4 @@ for ax in axs.flat:
 #for ax in axs.flat:
 #    ax.label_outer()
 plt.show()
-
-f.close()
 
