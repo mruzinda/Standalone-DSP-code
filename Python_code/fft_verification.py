@@ -6,7 +6,7 @@ import numpy as np
 
 from numpy.fft import fft, ifft
 
-# Open text file containing beamformer output
+# Open binary file containing input data to cufft for comparison with nump fft
 filename = "/datag/users/mruzinda/i/input_h_cufft.bin"
 
 # Read file contents: np.fromfile(filename, dtype=float, count=- 1, sep='', offset=0)
@@ -15,29 +15,27 @@ contents_float = np.fromfile(filename, dtype=np.float32)
 print(len(contents_float))
 print(contents_float[0])
 
-# data_in_idx(p, t, w, c, a, Np, Nt, Nw, Nc)
-
 # Array dimensions
 # 1k mode
-#N_fine = (4096*1024)/8 # 2^19
+#N_time = (4096*1024)/8 # 2^19
 #N_coarse = 1 # 4
 # 4k mode
-#N_fine = (1024*1024)/8 # 2^17 
-#N_coarse = 4 # 4
+N_time = (1024*1024)/8 # 2^17 
+N_coarse = 4 # 4
 # 32k mode
-N_time = (128*1024)/8 # 2^14
+#N_time = (128*1024)/8 # 2^14
+#N_coarse = 32 # 4
+
 N_fine = N_time
-N_coarse = 32 # 4
 
 N_pol = 2
 N_win = 8
 N_ant = 64 
 N_iq = 2
 
-# Reshape array to 3D -> Antenna X Polarization X Time X Bins
-contents_array = contents_float[0:(N_coarse*N_win*N_pol*N_ant*N_time*N_iq)].reshape(N_ant,N_coarse,N_win,N_time,N_pol,N_iq)
+# Reshape array to multidimensional one -> IQ X Polarization X Time samples X Time Windows X Coarse channels X Antenna
+x = contents_float[0:(N_coarse*N_win*N_pol*N_ant*N_time*N_iq)].reshape(N_ant,N_coarse,N_win,N_time,N_pol,N_iq)
 
-x = np.zeros(N_win*N_pol*N_ant*N_coarse*N_time*N_iq).reshape(N_win,N_pol,N_ant,N_coarse,N_time,N_iq)
 X = np.zeros(N_win*N_pol*N_ant*N_coarse*N_fine*N_iq).reshape(N_win,N_pol,N_ant,N_coarse*N_fine,N_iq)
 # Combine coarse and fine channels
 for c in range(0,N_coarse):
@@ -45,7 +43,7 @@ for c in range(0,N_coarse):
         for p in range(0,N_pol):
             for a in range(0,N_ant):
                 for iq in range(0,N_iq):
-                    X[w,p,a,(0+c*N_fine):(N_fine+c*N_fine),iq] = fft(contents_array[a,c,w,0:N_time,p,iq])
+                    X[w,p,a,(0+c*N_fine):(N_fine+c*N_fine),iq] = np.abs(fft(x[a,c,w,0:N_time,p,iq]))
 
 ant_idx = 0 # beam index to plot
 pol_idx = 0 # polarization index to plot
@@ -58,7 +56,7 @@ iq_idx = 0 # Real or imaginary component
 #plt.imshow(contents_array[0:N_win,0:N_coarse,beam_idx], extent=[1, N_coarse, 1, N_win], aspect='auto', interpolation='bicubic')
 #plt.imshow(contents_array[coarse_idx,0:N_win,pol_idx,ant_idx,0:N_fine,iq_idx], extent=[1, N_fine, 1, N_win], aspect='auto', interpolation='none')
 plt.imshow(X[0:N_win,pol_idx,ant_idx,0:N_coarse*N_fine,iq_idx], extent=[1, N_coarse*N_fine, 1, N_win], aspect='auto', interpolation='none')
-plt.title('Intensity map (Frequency vs. time)')
+plt.title('Waterfall plot (Frequency vs. time)')
 plt.ylabel('Time samples')
 plt.xlabel('Frequency bins')
 plt.show()
