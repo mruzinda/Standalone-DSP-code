@@ -36,6 +36,7 @@ N_iq = 2
 # Reshape array to multidimensional one -> IQ X Polarization X Time samples X Time Windows X Coarse channels X Antenna
 x = contents_float[0:(N_coarse*N_win*N_pol*N_ant*N_time*N_iq)].reshape(N_ant,N_coarse,N_win,N_time,N_pol,N_iq)
 
+X_tmp = np.zeros(N_fine)
 X = np.zeros(N_win*N_pol*N_ant*N_coarse*N_fine*N_iq).reshape(N_win,N_pol,N_ant,N_coarse*N_fine,N_iq)
 # Combine coarse and fine channels
 for c in range(0,N_coarse):
@@ -43,7 +44,10 @@ for c in range(0,N_coarse):
         for p in range(0,N_pol):
             for a in range(0,N_ant):
                 for iq in range(0,N_iq):
-                    X[w,p,a,(0+c*N_fine):(N_fine+c*N_fine),iq] = np.abs(fft(x[a,c,w,0:N_time,p,iq]))
+                    # FFT
+                    X_tmp = np.abs(fft(x[a,c,w,0:N_time,p,iq]))
+                    # FFT shift
+                    X[w,p,a,(0+c*N_fine):(N_fine+c*N_fine),iq] = np.concatenate((X_tmp[((N_fine/2)+1):(N_fine)],X_tmp[0:((N_fine/2)+1)]), axis=None)
 
 ant_idx = 0 # beam index to plot
 pol_idx = 0 # polarization index to plot

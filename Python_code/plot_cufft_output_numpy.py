@@ -35,8 +35,10 @@ N_iq = 2
 contents_array = contents_float[0:(N_coarse*N_win*N_pol*N_ant*N_fine*N_iq)].reshape(N_win,N_coarse,N_pol,N_ant,N_fine,N_iq)
 
 # Initialize real and imaginary components
+contents_tmp = np.zeros(N_fine)
 contents_restructure = np.zeros(N_win*N_pol*N_ant*N_coarse*N_fine*N_iq).reshape(N_win,N_pol,N_ant,N_coarse*N_fine,N_iq)
 # Absolute value/amplitude of FFT output
+X_tmp = np.zeros(N_fine)
 X = np.zeros(N_win*N_pol*N_ant*N_coarse*N_fine).reshape(N_win,N_pol,N_ant,N_coarse*N_fine)
 
 # Combine coarse and fine channels
@@ -44,9 +46,15 @@ for c in range(0,N_coarse):
     for w in range(0,N_win):
         for p in range(0,N_pol):
             for a in range(0,N_ant):
+                # FFT output (amplitude)
+                X_tmp = np.sqrt(np.square(contents_array[w,c,p,a,0:N_fine,0]) + np.square(contents_array[w,c,p,a,0:N_fine,1]))
+                # FFT shift
+                X[w,p,a,(0+c*N_fine):(N_fine+c*N_fine)] = np.concatenate((X_tmp[((N_fine/2)+1):(N_fine)],X_tmp[0:((N_fine/2)+1)]), axis=None)
+
                 for iq in range(0,N_iq):
-                    contents_restructure[w,p,a,(0+c*N_fine):(N_fine+c*N_fine),iq] = contents_array[w,c,p,a,0:N_fine,iq]
-                    X[w,p,a,(0+c*N_fine):(N_fine+c*N_fine)] = np.sqrt(np.square(contents_array[w,c,p,a,0:N_fine,0]) + np.square(contents_array[w,c,p,a,0:N_fine,1]))
+                    # FFT output (amplitude)
+                    contents_tmp = contents_array[w,c,p,a,0:N_fine,iq]
+                    contents_restructure[w,p,a,(0+c*N_fine):(N_fine+c*N_fine),iq] = np.concatenate((contents_tmp[((N_fine/2)+1):(N_fine)],contents_tmp[0:((N_fine/2)+1)]), axis=None)
 
 ant_idx = 0 # beam index to plot
 pol_idx = 0 # polarization index to plot
