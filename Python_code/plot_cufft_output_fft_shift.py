@@ -18,11 +18,11 @@ print(contents_float[0])
 
 # Array dimensions
 # 1k mode
-N_fine = (4096*1024)/8 # 2^19
-N_coarse = 1
+#N_fine = (4096*1024)/8 # 2^19
+#N_coarse = 1
 # 4k mode
-#N_fine = (1024*1024)/8 # 2^17 
-#N_coarse = 4 # 4
+N_fine = (1024*1024)/8 # 2^17 
+N_coarse = 4 # 4
 # 32k mode
 #N_fine = (128*1024)/8 # 2^14
 #N_coarse = 32
