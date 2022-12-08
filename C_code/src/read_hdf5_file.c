@@ -1,8 +1,8 @@
 // This script reads HDF5 files for use in the coherent beamformer thread
 // To compile it:
-// gcc read_hdf5_file.c -o read_hdf5_file.exe -lm -lhdf5
+// gcc read_hdf5_file.c -o read_hdf5_file -lm -lhdf5
 // To run it:
-// ./read_hdf5_file.exe
+// ./read_hdf5_file
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,9 +21,12 @@
 #define cal_all_idx(a, p, f, Na, Np)            (a + Na*p + Np*Na*f)
 #define delay_rates_idx(a, b, t, Na, Nb)        (a + Na*b + Nb*Na*t)
 
-//#define FILE "/datag/users/mruzinda/hdf5/blk4.uvh5"
-#define FILE "/home/obs/20211220/0016/guppi_59600_66373_001540_J0408-6545_0001.bfr5"
-#define BASEFILE "guppi_59600_66373_001540_J0408-6545_0001.bfr5"
+//#define FILE "/datag/users/mruzinda/hdf5/test.bfr5"
+//#define FILE "/home/obs/20211220/0016/guppi_59600_66373_001540_J0408-6545_0001.bfr5"
+//#define BASEFILE "guppi_59600_66373_001540_J0408-6545_0001.bfr5"
+#define FILE "/home/mruzinda/hpguppi_proc/sim_data_and_coefficients/test_data/guppi_bfr5_test_srcname_JBLAH-BLAH_NUM.bfr5"
+#define BASEFILE "guppi_bfr5_test_srcname_JBLAH-BLAH_NUM.bfr5"
+//#define BASEFILE "MK-obsid.bfr5"
 
 int main()
 {
@@ -98,15 +101,15 @@ int main()
   uint64_t npol;
   hvl_t *src_names_str;
 
-  int Nant = 63;    // Number of antennas
-  int Nbeams = 61;  // Number of beams
+  int Nant = 64;    // Number of antennas
+  int Nbeams = 64;  // Number of beams
   int Ntimes = 30; // Number of time stamps
   int Npol = 2;     // Number of polarizations
   int a = 34; // Antenna index
   int b = 1;  // Beam index
   int t = 1;  // Time stamp index
   int p = 1;  // Polarization index
-  int c = 223;// Coarse channel index
+  int c = 22;// Coarse channel index
 
   // Open an existing file. //
   file_id = H5Fopen(FILE, H5F_ACC_RDONLY, H5P_DEFAULT);

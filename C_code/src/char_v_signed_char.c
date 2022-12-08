@@ -28,5 +28,17 @@ int main(){
 	printf("data_float =  %0.1f and data_float2 =  %0.1f \n", data_float, data_float2);
 	printf("data_float3 =  %0.1f and data_float4 =  %0.1f \n", data_float3, data_float4);
 	
+	char test_string[200] = {0};
+	strcpy(test_string, "first_test");
+	char test_string2[200] = {0};
+	char test_string3[200] = {0};
+
+	memcpy(test_string2, test_string, 11);
+	memcpy(test_string3, &test_string, 11);
+
+	printf("test_string = %s \n", test_string);
+	printf("test_string2 = %s \n", test_string2);
+	printf("test_string3 = %s \n", test_string3);
+
 	return 0;
 }
